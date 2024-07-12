@@ -6,8 +6,6 @@ const char *ssid = "WiFi-2.4-2D90";
 // const char* ssid     = "raspi-webgui";
 const char *password = "wws7db5j9bu4k";
 
-
-
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
 #include <IRrecv.h>
@@ -39,6 +37,10 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 // The most appropriate pins for sck and mosi are 18 and 23 respectively. Or else, use 18 and 19
 //  end of display instance
 
+// Include the file that contains the display functions
+#include "DisplayFunctions.h"
+// It allows to have the functions in a separate file and make the main file cleaner
+
 // Define the pin for the mp3 player state
 int Player_state = 13;
 
@@ -66,78 +68,9 @@ decode_results results;
 
 int mainMenuIndex = 1;
 
-void unSelectAll()
-{
-  tft.fillRect(0, 0, 320, 40, ILI9341_BLACK);
-  tft.setCursor(10, 10);
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setTextSize(2);
-  tft.println(SETMUSICTEXT);
-  tft.drawRect(0, 0, 320, 40, ILI9341_WHITE);
+int currentMenu = MAINMENU;
 
-  tft.fillRect(0, 40, 320, 40, ILI9341_BLACK);
-  tft.setCursor(10, 50);
-  tft.println(SETALARMTIMETEXT);
-  tft.drawRect(0, 40, 320, 40, ILI9341_WHITE);
-
-  tft.fillRect(0, 80, 320, 40, ILI9341_BLACK);
-  tft.setCursor(10, 90);
-  tft.println(DOWNLOADMUSICTEXT);
-  tft.drawRect(0, 80, 320, 40, ILI9341_WHITE);
-
-  tft.fillRect(0, 120, 320, 40, ILI9341_BLACK);
-  tft.setCursor(10, 130);
-  tft.println(GETIPINFOTEXT);
-  tft.drawRect(0, 120, 320, 40, ILI9341_WHITE);
-}
-
-void selectMenuIndex()
-{
-  switch (mainMenuIndex)
-  {
-  case MAINMENUSETMUSICINDEX:
-    tft.fillRect(0, 0, 320, 40, ILI9341_BLUE);
-    tft.setCursor(10, 10);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setTextSize(2);
-    tft.println(SETMUSICTEXT);
-
-    break;
-  case MAINMENUSETALARMTIMEINDEX:
-    tft.fillRect(0, 40, 320, 40, ILI9341_BLUE);
-    tft.setCursor(10, 50);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setTextSize(2);
-    tft.println(SETALARMTIMETEXT);
-    break;
-  case MAINMENUDOWNLOADMUSICINDEX:
-    tft.fillRect(0, 80, 320, 40, ILI9341_BLUE);
-    tft.setCursor(10, 90);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setTextSize(2);
-    tft.println(DOWNLOADMUSICTEXT);
-    break;
-  case MAINMENUGETIPINFOSINDEX:
-    tft.fillRect(0, 120, 320, 40, ILI9341_BLUE);
-    tft.setCursor(10, 130);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setTextSize(2);
-    tft.println(GETIPINFOTEXT);
-    break;
-
-  default:
-    tft.println(mainMenuIndex);
-    break;
-  }
-}
-
-void updateMenu()
-{
-  unSelectAll();
-  selectMenuIndex();
-}
-
-String waitForPause()
+String waitForMenuSelection()
 {
   while (true)
   {
@@ -156,14 +89,14 @@ String waitForPause()
         }
         else
         {
-          mainMenuIndex = 4;
+          mainMenuIndex = 5;
         }
-        updateMenu();
+        updateMainMenu();
         irrecv.resume();
       }
       else if (results.value == DOWN)
       {
-        if (mainMenuIndex < 4)
+        if (mainMenuIndex < 5)
         {
           mainMenuIndex++;
         }
@@ -171,7 +104,7 @@ String waitForPause()
         {
           mainMenuIndex = 1;
         }
-        updateMenu();
+        updateMainMenu();
         irrecv.resume();
       }
       else
@@ -184,53 +117,186 @@ String waitForPause()
   }
 }
 
-
-
-void showIpInformations()
+int waitForMusicDownloadIndex(String nameList[])
 {
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setTextSize(2);
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setCursor(10, 10);
-  tft.println("IP Address: ");
-  tft.setCursor(10, 30);
-  tft.println("Not set");
-  tft.setCursor(10, 50);
-  tft.println("Subnet Mask: ");
-  tft.setCursor(10, 70);
-  tft.println("NOT SET");
-  tft.setCursor(10, 90);
-  tft.println("Gateway: ");
-  tft.setCursor(10, 110);
-  tft.println("Not set");
-  tft.setCursor(10, 130);
-  tft.println("FTP SERVER: ");
-  tft.setCursor(10, 150);
-  tft.println("NOT SET");
-  delay(5000);
-  tft.fillScreen(ILI9341_BLACK);
-  updateMenu();
+  int index = 0;
+  int indexMax = -1;
+
+  for (int i = 0; i < 255; i++)
+  {
+    if (nameList[i] != "")
+    {
+      indexMax++;
+    }
+  }
+  showMusicToDownload(nameList[index].c_str(), index);
+
+  while (currentMenu == DOWNLOADMUSIC)
+  {
+    if (irrecv.decode(&results))
+    {
+      if (results.value == PAUSE)
+      {
+        irrecv.resume();
+        return index;
+      }
+      else if (results.value == UP)
+      {
+        if (index > 0)
+        {
+          index--;
+        }
+        else
+        {
+          index = indexMax;
+        }
+
+        showMusicToDownload(nameList[index].c_str(), index);
+
+        irrecv.resume();
+      }
+      else if (results.value == DOWN)
+      {
+        if (index < indexMax)
+        {
+          index++;
+        }
+        else
+        {
+          index = 0;
+        }
+
+        showMusicToDownload(nameList[index].c_str(), index);
+
+        irrecv.resume();
+      }else if(results.value == LEFT){
+        currentMenu = MAINMENU;
+        resetDisplay();
+        updateMainMenu();
+        return -1;
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+    Serial.println(index);
+    delay(50);
+  }
 }
 
 
 
+bool downloadNameMusicFile()
+{
+
+  if (connectToFTPServer())
+  {
+    Serial.println("Connected to FTP Server");
+  }
+  else
+  {
+    Serial.println("Connection Failed");
+    tft.fillScreen(ILI9341_RED);
+    tft.setCursor(10, 10);
+    tft.println("Failed to download namesFiles because of connection error");
+    return false;
+  }
+
+  if (!loginFTPServer("esp32user", "pass"))
+  {
+    Serial.println("Login Failed");
+    tft.fillScreen(ILI9341_RED);
+    tft.setCursor(10, 10);
+    tft.println("Failed to download namesFiles because of login error");
+    return false;
+  }
+  else
+  {
+    Serial.println(">Loged iN");
+  }
+
+  sendFTPCommand("NOOP");
+  sendFTPCommand("TYPE I");
+  sendFTPCommand("TYPE I");
+  delay(200);
+  sendFTPCommand("EPSV");
+  parseFTPDataPort();
+
+  if (downloadFileFromFTP("/names/names.txt", 0, "") == false)
+  {
+    Serial.println("File Download Failed");
+    tft.fillScreen(ILI9341_RED);
+    tft.setCursor(10, 10);
+    tft.println("Failed to download namesFiles because of download error");
+    return false;
+  }
+  else
+  {
+    Serial.println("File Downloaded");
+  }
+  tft.fillScreen(ILI9341_GREEN);
+  tft.setCursor(10, 10);
+  tft.println("Names Files downloaded successfully");
+  return true;
+
+  delay(5000);
+}
+
+void manageMusicDownloadMenu()
+{
+  resetDisplay();
+
+  currentMenu = DOWNLOADMUSIC;
+
+  int numberOfMusicFiles = 0;
+
+  String nameList[255];
+  if (getLinesFromTxtFile("/names/names.txt", nameList))
+  {
+    for (int i = 0; i < 255; i++)
+    {
+      if (nameList[i] != "")
+        Serial.println(nameList[i]);
+      numberOfMusicFiles++;
+    }
+  }
+  else
+  {
+    Serial.println("Failed to get names from file");
+  }
+
+  tft.setTextSize(2);
+
+  waitForMusicDownloadIndex(nameList);
+}
 
 
 
+void manageMainMenu()
+{
 
+  updateMainMenu();
 
+  while (currentMenu == MAINMENU)
+  {
+    String valueRemote = waitForMenuSelection();
+    if (valueRemote == "PAUSE")
+    {
 
+      switch (mainMenuIndex)
+      {
+      case MAINMENUGETIPINFOSINDEX:
+        showIpInformations();
+        break;
 
-
-
-
-
-
-
-
-
-
-
+      case MAINMENUDOWNLOADMUSICINDEX:
+        manageMusicDownloadMenu();
+        break;
+      }
+    }
+  }
+}
 
 
 void setup()
@@ -239,29 +305,51 @@ void setup()
   Serial.begin(115200);
   Serial2.begin(115200);
 
+  irrecv.enableIRIn(); // Start the receiver
+  while (!Serial)      // Wait for the serial connection to be establised.
+    delay(100);
+  Serial.println();
+  Serial.print("IRrecvDemo is now running and waiting for IR message on Pin ");
+  Serial.println(kRecvPin);
+
+  tft.begin();
+  tft.setFont();
+  showWelcomeScreen();
+  delay(1000);
+
+  tft.fillScreen(ILI9341_BLACK);
+
   if (!SD_Initialize())
   {
     Serial.println("Card Mount Failed");
+    showCartMountFailed();
     return;
   }
+  else
+  {
+    showCartMountSuccess();
+  }
+
+  delay(1000);
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED)
   {
+    showWifiConnectionWaitScreen();
     delay(500);
-    Serial.print(".");
-    delay(500);
-    Serial.print(".");
-    delay(500);
-    Serial.print(".");
-    delay(500);
-    Serial.println("");
   }
 
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+
+  showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+
+  delay(1000);
+  resetDisplay();
+  updateMainMenu();
 
   uint8_t cardType = SD.cardType();
 
@@ -291,142 +379,90 @@ void setup()
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-
-  if (downloadFileFromFTP("/names/names.txt", 0, "") == false)
-  {
-    Serial.println("File Download Failed");
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-
-  delay(5000);
-
-
-
-
-
-
-
-
-
-  String nameList[255];
-  if (getLinesFromTxtFile("/names/names.txt", nameList))
-  {
-    for (int i = 0; i < 255; i++)
-    {
-      if (nameList[i] != "")
-        Serial.println(nameList[i]);
-    }
-  }
-  else
-  {
-    Serial.println("Failed to get names from file");
-  }
-
-  int musicIndex = 2;
-
-  String pathMusicFull = "/music/" + nameList[musicIndex];
-
-  const char *pathMusicFullToChar = pathMusicFull.c_str();
-
-  const char *pathMusicName = nameList[2].c_str();
-
-  Serial.println(pathMusicName);
-
-
-
-
-
-
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-  if (downloadFileFromFTP(pathMusicFullToChar,musicIndex, pathMusicName) == false)
-  {
-    Serial.println("File Download Failed");
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-
-  delay(5000);
-
   /*
-    Serial.println("Getting File List...");
-    listDir("/music", 0);
-    Serial.println("File List Received");
 
-    delay(3000);
-  */
-  if (disconnectFromFTPServer())
-  {
-    Serial.println("Disconnected");
-  }
-  else
-  {
-    Serial.println("Disconnection Failed");
-  }
 
-  while (disconnectFromFTPServer() == false)
-  {
-    
-    delay(150);
-    Serial.println("Disconnection Failed, trying again...");
-  }
+    int musicIndex = 2;
+
+    String pathMusicFull = "/music/" + nameList[musicIndex];
+
+    const char *pathMusicFullToChar = pathMusicFull.c_str();
+
+    const char *pathMusicName = nameList[2].c_str();
+
+    Serial.println(pathMusicName);
+
+
+
+
+
+
+
+    if (connectToFTPServer())
+    {
+      Serial.println("Connected to FTP Server");
+    }
+    else
+    {
+      Serial.println("Connection Failed");
+    }
+
+    if (!loginFTPServer("esp32user", "pass"))
+    {
+      Serial.println("Login Failed");
+    }
+    else
+    {
+      Serial.println(">Loged iN");
+    }
+
+    sendFTPCommand("NOOP");
+    sendFTPCommand("TYPE I");
+    sendFTPCommand("TYPE I");
+    delay(200);
+    sendFTPCommand("EPSV");
+    parseFTPDataPort();
+
+    if (downloadFileFromFTP(pathMusicFullToChar,musicIndex, pathMusicName) == false)
+    {
+      Serial.println("File Download Failed");
+    }
+    else
+    {
+      Serial.println("File Downloaded");
+    }
+
+    delay(5000);
+
+    if (disconnectFromFTPServer())
+    {
+      Serial.println("Disconnected");
+    }
+    else
+    {
+      Serial.println("Disconnection Failed");
+    }
+
+    while (disconnectFromFTPServer() == false)
+    {
+
+      delay(150);
+      Serial.println("Disconnection Failed, trying again...");
+    }
+
+    */
 }
 
 void loop()
 {
+  // put your main code here, to run repeatedly:
+  switch (currentMenu)
+  {
+  case DOWNLOADMUSIC:
+    manageMusicDownloadMenu();
+    break;
+  case MAINMENU:
+    manageMainMenu();
+    break;
+  }
 }

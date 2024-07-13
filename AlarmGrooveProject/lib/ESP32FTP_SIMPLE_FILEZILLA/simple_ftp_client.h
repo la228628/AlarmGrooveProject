@@ -14,4 +14,6 @@ bool parseFTPDataPort();
 bool downloadFileFromFTP(const char *path, int musicindex, const char *filename);
 void getFile();
 bool getLinesFromTxtFile(const char *path, String lineArray[]); // Fonction ajoutée
+char *getFTPHost(); // Fonction ajoutée
+void setFTPHost(char *ftpHost); // Fonction ajoutée
 #endif

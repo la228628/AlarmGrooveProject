@@ -12,10 +12,11 @@ extern Adafruit_ILI9341 tft;
 void unSelectAll();
 void selectMenuIndex();
 void updateMainMenu();
-void showIpInformations();
+void showIpInformations( const char* ip, const char* mask, const char* gateway,  char *ftpHost, const char* ssid);
 void showWelcomeScreen();
 void showCartMountFailed();
 void showCartMountSuccess();
+void showFatalErrorScreen();
 void showWifiConnectionWaitScreen();
 void showWifiConnectionSuccessScreen(const char* ip);
 

@@ -169,7 +169,9 @@ int waitForMusicDownloadIndex(String nameList[])
         showMusicToDownload(nameList[index].c_str(), index);
 
         irrecv.resume();
-      }else if(results.value == LEFT){
+      }
+      else if (results.value == LEFT)
+      {
         currentMenu = MAINMENU;
         resetDisplay();
         updateMainMenu();
@@ -184,8 +186,6 @@ int waitForMusicDownloadIndex(String nameList[])
     delay(50);
   }
 }
-
-
 
 bool downloadNameMusicFile()
 {
@@ -271,8 +271,6 @@ void manageMusicDownloadMenu()
   waitForMusicDownloadIndex(nameList);
 }
 
-
-
 void manageMainMenu()
 {
 
@@ -287,7 +285,17 @@ void manageMainMenu()
       switch (mainMenuIndex)
       {
       case MAINMENUGETIPINFOSINDEX:
-        showIpInformations();
+        // setFTPHost("0.0.0.0");
+        showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
+        while(results.value !=LEFT)
+        {
+          if (irrecv.decode(&results))
+          {
+            irrecv.resume();
+          }
+        }
+        resetDisplay();
+        updateMainMenu();
         break;
 
       case MAINMENUDOWNLOADMUSICINDEX:
@@ -297,7 +305,6 @@ void manageMainMenu()
     }
   }
 }
-
 
 void setup()
 {
@@ -323,6 +330,8 @@ void setup()
   {
     Serial.println("Card Mount Failed");
     showCartMountFailed();
+    delay(1000);
+    currentMenu = FATALERROR;
     return;
   }
   else
@@ -334,10 +343,10 @@ void setup()
 
   WiFi.begin(ssid, password);
 
+  showWifiConnectionWaitScreen();
   while (WiFi.status() != WL_CONNECTED)
   {
-    showWifiConnectionWaitScreen();
-    delay(500);
+    
   }
 
   Serial.println("");
@@ -351,30 +360,7 @@ void setup()
   resetDisplay();
   updateMainMenu();
 
-  uint8_t cardType = SD.cardType();
 
-  if (cardType == CARD_NONE)
-  {
-    Serial.println("No SD card attached");
-  }
-
-  Serial.print("SD Card Type: ");
-  if (cardType == CARD_MMC)
-  {
-    Serial.println("MMC");
-  }
-  else if (cardType == CARD_SD)
-  {
-    Serial.println("SDSC");
-  }
-  else if (cardType == CARD_SDHC)
-  {
-    Serial.println("SDHC");
-  }
-  else
-  {
-    Serial.println("UNKNOWN");
-  }
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
@@ -455,7 +441,19 @@ void setup()
 
 void loop()
 {
+
   // put your main code here, to run repeatedly:
+
+  if (currentMenu == FATALERROR)
+  {
+    showFatalErrorScreen();
+    //We need to stop the loop here
+    while (true)
+    {
+      
+    }
+  }
+
   switch (currentMenu)
   {
   case DOWNLOADMUSIC:

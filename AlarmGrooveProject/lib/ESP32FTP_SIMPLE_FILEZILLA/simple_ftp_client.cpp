@@ -261,3 +261,13 @@ bool getLinesFromTxtFile(const char *path, String lineArray[])
   }
   return true;
 }
+
+char *getFTPHost()
+{
+  return host;
+}
+
+void setFTPHost(char *ftpHost)
+{
+  host = ftpHost;
+}

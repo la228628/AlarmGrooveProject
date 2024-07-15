@@ -70,7 +70,7 @@ int mainMenuIndex = 1;
 
 int currentMenu = MAINMENU;
 
-String waitForMenuSelection()
+bool waitForMenuSelection()
 {
   while (true)
   {
@@ -79,7 +79,7 @@ String waitForMenuSelection()
       if (results.value == PAUSE)
       {
         irrecv.resume();
-        return "PAUSE";
+        return true;
       }
       else if (results.value == UP)
       {
@@ -217,7 +217,7 @@ bool downloadNameMusicFile()
   }
 
   sendFTPCommand("NOOP");
-  sendFTPCommand("TYPE I");
+  //sendFTPCommand("TYPE I");
   sendFTPCommand("TYPE I");
   delay(200);
   sendFTPCommand("EPSV");
@@ -275,8 +275,8 @@ void manageMainMenu()
 
   while (currentMenu == MAINMENU)
   {
-    String valueRemote = waitForMenuSelection();
-    if (valueRemote == "PAUSE")
+    bool menuSelected = waitForMenuSelection();
+    if (menuSelected == true)
     {
 
       switch (mainMenuIndex)

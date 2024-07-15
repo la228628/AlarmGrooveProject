@@ -232,7 +232,7 @@ void listDir(const char *dirname, uint8_t levels)
   }
 }
 
-int getFilesFromDir(const char *dirname, uint8_t levels, char *filesList[])
+int getFilesFromDir(const char *dirname, uint8_t levels, String filesList[])
 {
 
   Serial.printf("Listing directory: %s\n", dirname);
@@ -267,7 +267,7 @@ int getFilesFromDir(const char *dirname, uint8_t levels, char *filesList[])
       Serial.print(file.name());
       Serial.print("  SIZE: ");
       Serial.println(file.size());
-      filesList[i] = (char *)file.name();
+      filesList[i] = (String)file.name();
       i++;
     }
     file = root.openNextFile();

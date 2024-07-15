@@ -254,6 +254,16 @@ bool downloadMusicFile(String musicName, int musicIndex)
 
   String pathMusicFull = "/music/" + musicName;
 
+  //On veut enlever les accents
+  pathMusicFull.replace("é", "e");
+  pathMusicFull.replace("è", "e");
+  pathMusicFull.replace("à", "a");
+  pathMusicFull.replace("ç", "c");
+  pathMusicFull.replace("ù", "u");
+  pathMusicFull.replace("â", "a");
+  pathMusicFull.replace("ê", "e");
+  pathMusicFull.replace("î", "i");
+
   const char *pathMusicFullToChar = pathMusicFull.c_str();
 
   const char *pathMusicName = musicName.c_str();
@@ -340,7 +350,7 @@ void manageMusicDownloadMenu()
       showFTPErrorsScreen();
     }
   }
-
+  disconnectFromFTPServer();
   delay(3000);
   currentMenu = MAINMENU;
   resetDisplay();
@@ -412,7 +422,7 @@ void manageFetchMusicFileName()
 
 void manageChooseMusicMenu()
 {
-  char *musicOnSD[255];
+  String musicOnSD[255];
   int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
 
   if (numberOfMusicFiles == -1)
@@ -428,6 +438,7 @@ void manageChooseMusicMenu()
   {
     tft.setCursor(10, 10 + i * 20);
     tft.println(musicOnSD[i]);
+    Serial.println(musicOnSD[i]);
   }
   Serial.println("End of Ready to display music files");
   delay(5000);

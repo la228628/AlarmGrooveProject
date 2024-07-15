@@ -135,6 +135,12 @@ void showIpInformations(const char *ip, const char *mask, const char *gateway, c
     tft.setCursor(10, 190);
     tft.println(ssid);
 
+    tft.setTextSize(1);
+    tft.setCursor(10, 220);
+    tft.setTextColor(ILI9341_ORANGE);
+    tft.println("Press |<< to return to the main menu");
+
+
     // Optional: Draw a border around the text area
     tft.drawRect(5, 5, tft.width() - 10, tft.height() - 10, ILI9341_WHITE);
 
@@ -303,6 +309,8 @@ void showDownloadMusicWaitingScreen(){
     tft.println("Please wait...");
     tft.setCursor(10, 50);
     tft.println("This may take a while");
+    tft.setCursor(10, 70);
+    tft.println("Please do not turn off the device");
 }
 void resetDisplay()
 {

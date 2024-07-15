@@ -23,6 +23,9 @@ void showFetchMusicFilesNameScreen();
 void showFetchMusicFilesNameSucessScreen();
 void showFTPErrorsScreen();
 
+void showMusicDownloadSuccessScreen();
+void showDownloadMusicWaitingScreen();
+
 void showMusicToDownload(const char* musicName, int musicIndex);
 
 void resetDisplay();

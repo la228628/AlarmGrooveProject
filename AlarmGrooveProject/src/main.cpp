@@ -2,9 +2,12 @@
 #include "simple_ftp_client.h"
 #include "SD_card_helper.h"
 
-const char *ssid = "WiFi-2.4-2D90";
+char *ssidToConnect = "WiFi-2.4-2D90";
+char *passwordToConnect = "wws7db5j9bu4k";
+
+const char *ssid = ssidToConnect;
 // const char* ssid     = "raspi-webgui";
-const char *password = "wws7db5j9bu4k";
+const char *password = passwordToConnect;
 
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
@@ -106,6 +109,11 @@ bool waitForMenuSelection()
         }
         updateMainMenu();
         irrecv.resume();
+      }
+      else if (results.value == POWER)
+      {
+        // We want to restart the device
+        ESP.restart(); // Restart the device (same effect as pressing the reset button)
       }
       else
       {
@@ -217,7 +225,7 @@ bool downloadNameMusicFile()
   }
 
   sendFTPCommand("NOOP");
-  //sendFTPCommand("TYPE I");
+  // sendFTPCommand("TYPE I");
   sendFTPCommand("TYPE I");
   delay(200);
   sendFTPCommand("EPSV");
@@ -240,11 +248,64 @@ bool downloadNameMusicFile()
   delay(5000);
 }
 
+bool downloadMusicFile(String musicName, int musicIndex)
+{
+  
+
+  String pathMusicFull = "/music/" + musicName;
+
+  const char *pathMusicFullToChar = pathMusicFull.c_str();
+
+  const char *pathMusicName = musicName.c_str();
+
+  Serial.println(pathMusicName);
+
+  if (connectToFTPServer())
+  {
+    Serial.println("Connected to FTP Server");
+  }
+  else
+  {
+    Serial.println("Connection Failed");
+    return false;
+  }
+
+  if (!loginFTPServer("esp32user", "pass"))
+  {
+    Serial.println("Login Failed");
+    return false;
+  }
+  else
+  {
+    Serial.println(">Loged iN");
+  }
+
+  sendFTPCommand("NOOP");
+  sendFTPCommand("TYPE I");
+  sendFTPCommand("TYPE I");
+  delay(200);
+  sendFTPCommand("EPSV");
+  parseFTPDataPort();
+
+  if (downloadFileFromFTP(pathMusicFullToChar, musicIndex, pathMusicName) == false)
+  {
+    Serial.println("File Download Failed");
+    return false;
+  }
+  else
+  {
+    Serial.println("File Downloaded");
+  }
+  return true;
+}
+
 void manageMusicDownloadMenu()
 {
   resetDisplay();
 
   currentMenu = DOWNLOADMUSIC;
+
+  int musicToDownloadIndex = 0;
 
   int numberOfMusicFiles = 0;
 
@@ -265,7 +326,25 @@ void manageMusicDownloadMenu()
 
   tft.setTextSize(2);
 
-  waitForMusicDownloadIndex(nameList);
+  musicToDownloadIndex = waitForMusicDownloadIndex(nameList);
+
+  if (musicToDownloadIndex != -1)
+  {
+    showDownloadMusicWaitingScreen();
+    if (downloadMusicFile(nameList[musicToDownloadIndex], musicToDownloadIndex))
+    {
+      showMusicDownloadSuccessScreen();
+    }
+    else
+    {
+      showFTPErrorsScreen();
+    }
+  }
+
+  delay(3000);
+  currentMenu = MAINMENU;
+  resetDisplay();
+  updateMainMenu();
 }
 
 void manageMainMenu()
@@ -336,18 +415,16 @@ void manageChooseMusicMenu()
   char *musicOnSD[255];
   int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
 
-
-  if( numberOfMusicFiles == -1){
+  if (numberOfMusicFiles == -1)
+  {
     currentMenu = MAINMENU;
     return;
   }
 
-
   Serial.println("Ready to display music files: ");
   Serial.print(numberOfMusicFiles);
-  
-  
-  for(int i = 0; i < numberOfMusicFiles; i++)
+
+  for (int i = 0; i < numberOfMusicFiles; i++)
   {
     tft.setCursor(10, 10 + i * 20);
     tft.println(musicOnSD[i]);
@@ -355,7 +432,6 @@ void manageChooseMusicMenu()
   Serial.println("End of Ready to display music files");
   delay(5000);
   currentMenu = MAINMENU;
-  
 }
 
 void setup()
@@ -413,79 +489,6 @@ void setup()
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
-
-  /*
-
-
-    int musicIndex = 2;
-
-    String pathMusicFull = "/music/" + nameList[musicIndex];
-
-    const char *pathMusicFullToChar = pathMusicFull.c_str();
-
-    const char *pathMusicName = nameList[2].c_str();
-
-    Serial.println(pathMusicName);
-
-
-
-
-
-
-
-    if (connectToFTPServer())
-    {
-      Serial.println("Connected to FTP Server");
-    }
-    else
-    {
-      Serial.println("Connection Failed");
-    }
-
-    if (!loginFTPServer("esp32user", "pass"))
-    {
-      Serial.println("Login Failed");
-    }
-    else
-    {
-      Serial.println(">Loged iN");
-    }
-
-    sendFTPCommand("NOOP");
-    sendFTPCommand("TYPE I");
-    sendFTPCommand("TYPE I");
-    delay(200);
-    sendFTPCommand("EPSV");
-    parseFTPDataPort();
-
-    if (downloadFileFromFTP(pathMusicFullToChar,musicIndex, pathMusicName) == false)
-    {
-      Serial.println("File Download Failed");
-    }
-    else
-    {
-      Serial.println("File Downloaded");
-    }
-
-    delay(5000);
-
-    if (disconnectFromFTPServer())
-    {
-      Serial.println("Disconnected");
-    }
-    else
-    {
-      Serial.println("Disconnection Failed");
-    }
-
-    while (disconnectFromFTPServer() == false)
-    {
-
-      delay(150);
-      Serial.println("Disconnection Failed, trying again...");
-    }
-
-    */
 }
 
 void loop()

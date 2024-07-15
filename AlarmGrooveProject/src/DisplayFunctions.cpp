@@ -286,7 +286,24 @@ void showFetchMusicFilesNameSucessScreen(){
     tft.setCursor(10, 10);
     tft.println("Music files name fetched successfully");
 }
-
+void showMusicDownloadSuccessScreen(){
+    tft.fillScreen(ILI9341_GREEN);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Music downloaded successfully");
+}
+void showDownloadMusicWaitingScreen(){
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Downloading music");
+    tft.setCursor(10, 30);
+    tft.println("Please wait...");
+    tft.setCursor(10, 50);
+    tft.println("This may take a while");
+}
 void resetDisplay()
 {
     tft.fillScreen(ILI9341_BLACK);

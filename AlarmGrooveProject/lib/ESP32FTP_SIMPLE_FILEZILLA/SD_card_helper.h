@@ -21,6 +21,7 @@ uint8_t SD_WriteFile(uint8_t * buf , uint8_t len, const char * path);
 
 void listDir(const char * dirname, uint8_t levels);
 void listDir(const char * dirname, uint8_t levels);
+int getFilesFromDir(const char * dirname, uint8_t levels, char * filesList[]); //Fonction ajoutée
 void removeDir(const char * path);
 void readFile(const char * path);
 void readFile(const char * path);

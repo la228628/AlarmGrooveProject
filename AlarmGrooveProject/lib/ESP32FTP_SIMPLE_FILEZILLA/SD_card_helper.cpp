@@ -6,9 +6,9 @@ uint64_t writeFilePointer = 0;
 
 bool SD_Initialize()
 {
-  SPIClass * hspi = NULL;
+  SPIClass *hspi = NULL;
   hspi = new SPIClass(HSPI);
-  hspi->begin(17, 19, 22, 5); //SCLK, MISO, MOSI, SS
+  hspi->begin(17, 19, 22, 5); // SCLK, MISO, MOSI, SS
   if (!SD.begin(SS, *hspi, 19000000, "/sd"))
   {
     Serial.println("Card Mount Failed");
@@ -25,14 +25,14 @@ bool SD_Detect()
     Serial.println("Card Mount Failed");
     return false;
   }
-  uint64_t usedBy = SD.usedBytes ();
+  uint64_t usedBy = SD.usedBytes();
   uint64_t cardSize = SD.totalBytes() / (1024 * 1024);
-  uint64_t freeSize = ( SD.cardSize () - SD.usedBytes () ) / (1024 * 1024);
+  uint64_t freeSize = (SD.cardSize() - SD.usedBytes()) / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB Free Size %lluMB (%f %%)\n", cardSize, freeSize, (float)((freeSize * 100) / cardSize));
   return true;
 }
 
-bool SD_Exist(const char * path)
+bool SD_Exist(const char *path)
 {
   File root = SD.open(path);
   if (!root)
@@ -49,10 +49,11 @@ bool SD_Exist(const char * path)
   return true;
 }
 
-bool SD_mkDir(const char * path)
+bool SD_mkDir(const char *path)
 {
   Serial.printf("Creating Dir: %s\n", path);
-  if (SD.mkdir(path)) {
+  if (SD.mkdir(path))
+  {
     Serial.println("Dir created");
     return true;
   }
@@ -63,7 +64,7 @@ bool SD_mkDir(const char * path)
   }
 }
 
-bool SD_mkFile(const char * path)
+bool SD_mkFile(const char *path)
 {
   File file = SD.open(path, FILE_WRITE);
   if (!file)
@@ -85,7 +86,7 @@ bool SD_mkFile(const char * path)
   return true;
 }
 
-bool SD_rmDir(const char * path)
+bool SD_rmDir(const char *path)
 {
   Serial.printf("Removing Dir: %s\n", path);
   if (SD.rmdir(path))
@@ -95,14 +96,14 @@ bool SD_rmDir(const char * path)
   }
   Serial.println("rmdir failed");
   return false;
-
 }
 
-bool SD_rmFile(const char * path)
+bool SD_rmFile(const char *path)
 {
   Serial.printf("Deleting file: %s\n", path);
 
-  if(!SD.exists(path)){
+  if (!SD.exists(path))
+  {
     Serial.println("File does not exist");
     return false;
   }
@@ -116,7 +117,7 @@ bool SD_rmFile(const char * path)
   return false;
 }
 
-bool SD_CopyFile(const char * src , const char * dest)
+bool SD_CopyFile(const char *src, const char *dest)
 {
   uint8_t ret;
   uint8_t buf[512];
@@ -144,7 +145,7 @@ bool SD_CopyFile(const char * src , const char * dest)
   return true;
 }
 
-uint8_t SD_ReadFile(uint64_t address, uint8_t *buf , uint8_t len, const char * path)
+uint8_t SD_ReadFile(uint64_t address, uint8_t *buf, uint8_t len, const char *path)
 {
   File file = SD.open(path, FILE_READ);
   if (!file)
@@ -155,7 +156,7 @@ uint8_t SD_ReadFile(uint64_t address, uint8_t *buf , uint8_t len, const char * p
   uint8_t fileSize = file.size();
   uint8_t ret = 0;
 
-  if ( !((address + len) > fileSize))
+  if (!((address + len) > fileSize))
   {
     if (file.seek(address))
     {
@@ -167,7 +168,7 @@ uint8_t SD_ReadFile(uint64_t address, uint8_t *buf , uint8_t len, const char * p
   return 0;
 }
 
-uint8_t SD_WriteFile(uint8_t * buf , uint8_t len, const char * path)
+uint8_t SD_WriteFile(uint8_t *buf, uint8_t len, const char *path)
 {
   uint8_t ret = 0;
   File file = SD.open(path, FILE_APPEND);
@@ -180,7 +181,7 @@ uint8_t SD_WriteFile(uint8_t * buf , uint8_t len, const char * path)
   return ret;
 }
 
-uint8_t Get_File_Size( const char * path)
+uint8_t Get_File_Size(const char *path)
 {
   File file = SD.open(path, FILE_READ);
   if (!file)
@@ -192,7 +193,8 @@ uint8_t Get_File_Size( const char * path)
   return fileSize;
 }
 
-void listDir(const char * dirname, uint8_t levels) {
+void listDir(const char *dirname, uint8_t levels)
+{
   Serial.printf("Listing directory: %s\n", dirname);
 
   File root = SD.open(dirname);
@@ -230,7 +232,59 @@ void listDir(const char * dirname, uint8_t levels) {
   }
 }
 
-void readFile(const char * path) {
+int getFilesFromDir(const char *dirname, uint8_t levels, char *filesList[])
+{
+
+  Serial.printf("Listing directory: %s\n", dirname);
+  int i = 0;
+  int filesNumber = 0;
+
+  File root = SD.open(dirname);
+  if (!root)
+  {
+    Serial.println("Failed to open directory");
+    return -1;
+  }
+  if (!root.isDirectory())
+  {
+    Serial.println("Not a directory");
+    return -1;
+  }
+
+  File file = root.openNextFile();
+  while (file)
+  {
+    if (file.isDirectory())
+    {
+      Serial.print("  DIR : ");
+      Serial.println(file.name());
+      Serial.print("ERROR: Directory can contain only files");
+      return -1;
+    }
+    else
+    {
+      Serial.print("  FILE: ");
+      Serial.print(file.name());
+      Serial.print("  SIZE: ");
+      Serial.println(file.size());
+      filesList[i] = (char *)file.name();
+      i++;
+    }
+    file = root.openNextFile();
+  }
+  filesNumber = i;
+  if(filesNumber == 0)
+  {
+    Serial.println("No files in directory");
+    return -1;
+  }
+  Serial.print("Number of files: ");
+  Serial.println(filesNumber);
+  return filesNumber;
+}
+
+void readFile(const char *path)
+{
   Serial.printf("Reading file: %s\n", path);
 
   File file = SD.open(path);
@@ -248,60 +302,78 @@ void readFile(const char * path) {
   file.close();
 }
 
-void writeFile(const char * path, const char * message) {
+void writeFile(const char *path, const char *message)
+{
   Serial.printf("Writing file: %s\n", path);
 
   File file = SD.open(path, FILE_WRITE);
-  if (!file) {
+  if (!file)
+  {
     Serial.println("Failed to open file for writing");
     return;
   }
-  if (file.print(message)) {
+  if (file.print(message))
+  {
     Serial.println("File written");
-  } else {
+  }
+  else
+  {
     Serial.println("Write failed");
   }
   file.close();
 }
 
-void appendFile(const char * path, const char * message) {
+void appendFile(const char *path, const char *message)
+{
   Serial.printf("Appending to file: %s\n", path);
 
   File file = SD.open(path, FILE_APPEND);
-  if (!file) {
+  if (!file)
+  {
     Serial.println("Failed to open file for appending");
     return;
   }
-  if (file.print(message)) {
+  if (file.print(message))
+  {
     Serial.println("Message appended");
-  } else {
+  }
+  else
+  {
     Serial.println("Append failed");
   }
   file.close();
 }
 
-void renameFile(const char * path1, const char * path2) {
+void renameFile(const char *path1, const char *path2)
+{
   Serial.printf("Renaming file %s to %s\n", path1, path2);
-  if (SD.rename(path1, path2)) {
+  if (SD.rename(path1, path2))
+  {
     Serial.println("File renamed");
-  } else {
+  }
+  else
+  {
     Serial.println("Rename failed");
   }
 }
 
-void testFileIO(const char * path) {
+void testFileIO(const char *path)
+{
   File file = SD.open(path);
   static uint8_t buf[512];
   size_t len = 0;
   uint32_t start = millis();
   uint32_t end = start;
-  if (file) {
+  if (file)
+  {
     len = file.size();
     size_t flen = len;
     start = millis();
-    while (len) {
+    while (len)
+    {
       size_t toRead = len;
-      if (toRead > 512) {
+      if (toRead > 512)
+      {
         toRead = 512;
       }
       file.read(buf, toRead);
@@ -310,24 +382,26 @@ void testFileIO(const char * path) {
     end = millis() - start;
     Serial.printf("%u bytes read for %u ms\n", flen, end);
     file.close();
-  } else {
+  }
+  else
+  {
     Serial.println("Failed to open file for reading");
   }
 
-
   file = SD.open(path, FILE_WRITE);
-  if (!file) {
+  if (!file)
+  {
     Serial.println("Failed to open file for writing");
     return;
   }
 
   size_t i;
   start = millis();
-  for (i = 0; i < 2048; i++) {
+  for (i = 0; i < 2048; i++)
+  {
     file.write(buf, 512);
   }
   end = millis() - start;
   Serial.printf("%u bytes written for %u ms\n", 2048 * 512, end);
   file.close();
 }
-

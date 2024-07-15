@@ -235,9 +235,6 @@ bool downloadNameMusicFile()
   {
     Serial.println("File Downloaded");
   }
-  tft.fillScreen(ILI9341_GREEN);
-  tft.setCursor(10, 10);
-  tft.println("Names Files downloaded successfully");
   return true;
 
   delay(5000);
@@ -287,7 +284,7 @@ void manageMainMenu()
       case MAINMENUGETIPINFOSINDEX:
         // setFTPHost("0.0.0.0");
         showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
-        while(results.value !=LEFT)
+        while (results.value != LEFT)
         {
           if (irrecv.decode(&results))
           {
@@ -301,9 +298,64 @@ void manageMainMenu()
       case MAINMENUDOWNLOADMUSICINDEX:
         manageMusicDownloadMenu();
         break;
+      case FETCHMUSICFILENAME:
+        currentMenu = FETCHMUSICFILENAME;
+        resetDisplay();
+        break;
+      case MAINMENUSETMUSICINDEX:
+        currentMenu = CHOOSEMUSIC;
+        resetDisplay();
+        break;
       }
     }
   }
+}
+
+void manageFetchMusicFileName()
+{
+  resetDisplay();
+  showFetchMusicFilesNameScreen();
+
+  if (downloadNameMusicFile())
+  {
+    showFetchMusicFilesNameSucessScreen();
+  }
+  else
+  {
+    showFTPErrorsScreen();
+  }
+  disconnectFromFTPServer();
+  delay(3000);
+  currentMenu = MAINMENU;
+  resetDisplay();
+  updateMainMenu();
+}
+
+void manageChooseMusicMenu()
+{
+  char *musicOnSD[255];
+  int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
+
+
+  if( numberOfMusicFiles == -1){
+    currentMenu = MAINMENU;
+    return;
+  }
+
+
+  Serial.println("Ready to display music files: ");
+  Serial.print(numberOfMusicFiles);
+  
+  
+  for(int i = 0; i < numberOfMusicFiles; i++)
+  {
+    tft.setCursor(10, 10 + i * 20);
+    tft.println(musicOnSD[i]);
+  }
+  Serial.println("End of Ready to display music files");
+  delay(5000);
+  currentMenu = MAINMENU;
+  
 }
 
 void setup()
@@ -346,7 +398,6 @@ void setup()
   showWifiConnectionWaitScreen();
   while (WiFi.status() != WL_CONNECTED)
   {
-    
   }
 
   Serial.println("");
@@ -359,8 +410,6 @@ void setup()
   delay(1000);
   resetDisplay();
   updateMainMenu();
-
-
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
@@ -447,10 +496,9 @@ void loop()
   if (currentMenu == FATALERROR)
   {
     showFatalErrorScreen();
-    //We need to stop the loop here
+    // We need to stop the loop here
     while (true)
     {
-      
     }
   }
 
@@ -461,6 +509,12 @@ void loop()
     break;
   case MAINMENU:
     manageMainMenu();
+    break;
+  case FETCHMUSICFILENAME:
+    manageFetchMusicFileName();
+    break;
+  case CHOOSEMUSIC:
+    manageChooseMusicMenu();
     break;
   }
 }

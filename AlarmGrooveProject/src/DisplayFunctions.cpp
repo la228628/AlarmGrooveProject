@@ -257,6 +257,36 @@ void showFatalErrorScreen()
     tft.println("Please check the card and restart the device.");
 }
 
+void showFetchMusicFilesNameScreen()
+{
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Fetching music files name from the server");
+    tft.setCursor(10, 50);
+    tft.println("Please wait...");
+}
+
+void showFTPErrorsScreen()
+{
+    tft.fillScreen(ILI9341_RED);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("FTP Error Occured");
+    tft.setCursor(10, 30);
+    tft.println("Please check the FTP server and restart the device.");
+}
+
+void showFetchMusicFilesNameSucessScreen(){
+    tft.fillScreen(ILI9341_GREEN);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Music files name fetched successfully");
+}
+
 void resetDisplay()
 {
     tft.fillScreen(ILI9341_BLACK);

@@ -19,6 +19,9 @@ void showCartMountSuccess();
 void showFatalErrorScreen();
 void showWifiConnectionWaitScreen();
 void showWifiConnectionSuccessScreen(const char* ip);
+void showFetchMusicFilesNameScreen();
+void showFetchMusicFilesNameSucessScreen();
+void showFTPErrorsScreen();
 
 void showMusicToDownload(const char* musicName, int musicIndex);
 

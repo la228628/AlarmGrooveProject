@@ -26,7 +26,11 @@ void showFTPErrorsScreen();
 void showMusicDownloadSuccessScreen();
 void showDownloadMusicWaitingScreen();
 
+void showRestartConfirmActionScreen();
+
 void showMusicToDownload(const char* musicName, int musicIndex);
+
+void showAlarmClockMainScreen();
 
 void resetDisplay();
 

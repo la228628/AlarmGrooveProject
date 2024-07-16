@@ -5,7 +5,10 @@
 #include "RemoteTouch.h"
 
 extern int mainMenuIndex;
-
+void resetDisplay()
+{
+    tft.fillScreen(ILI9341_BLACK);
+}
 void unSelectAll()
 {
     tft.fillRect(0, 0, 320, 40, ILI9341_BLACK);
@@ -225,7 +228,7 @@ void showWifiConnectionSuccessScreen(const char *ip)
 
 void showMusicToDownload(const char *musicName, int musicIndex)
 {
-    tft.fillScreen(ILI9341_BLACK);
+    resetDisplay();
 
     tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
     tft.fillRect(5, 5, 310, 50, ILI9341_DARKGREY);
@@ -312,7 +315,31 @@ void showDownloadMusicWaitingScreen(){
     tft.setCursor(10, 70);
     tft.println("Please do not turn off the device");
 }
-void resetDisplay()
+
+
+void showRestartConfirmActionScreen()
 {
     tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Do you want to restart the device?");
+    tft.setCursor(10, 50);
+    tft.setTextColor(ILI9341_YELLOW);
+    tft.println("Press PAUSE to confirm");
+    tft.setCursor(10, 90);
+    tft.setTextColor(ILI9341_ORANGE);
+    tft.println("Press |<< to cancel");
+}
+
+void showAlarmClockMainScreen(){
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Alarm Clock");
+    tft.setCursor(10, 50);
+    tft.println("This feature is not implemented yet");
+    tft.setCursor(10, 90);
+    tft.println("Press PAUSE to go to the main menu");
 }

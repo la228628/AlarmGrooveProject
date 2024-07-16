@@ -71,7 +71,7 @@ decode_results results;
 
 int mainMenuIndex = 1;
 
-int currentMenu = MAINMENU;
+int currentMenu = ALARMCLOCKMAINSCREEN;
 
 bool waitForMenuSelection()
 {
@@ -112,8 +112,13 @@ bool waitForMenuSelection()
       }
       else if (results.value == POWER)
       {
-        // We want to restart the device
-        ESP.restart(); // Restart the device (same effect as pressing the reset button)
+        currentMenu = RESTARTCONFIRMACTION;
+        return false;
+      }
+      else if (results.value == LEFT)
+      {
+        currentMenu = ALARMCLOCKMAINSCREEN;
+        return false;
       }
       else
       {
@@ -180,9 +185,7 @@ int waitForMusicDownloadIndex(String nameList[])
       }
       else if (results.value == LEFT)
       {
-        currentMenu = MAINMENU;
-        resetDisplay();
-        updateMainMenu();
+        irrecv.resume();
         return -1;
       }
       else
@@ -250,11 +253,10 @@ bool downloadNameMusicFile()
 
 bool downloadMusicFile(String musicName, int musicIndex)
 {
-  
 
   String pathMusicFull = "/music/" + musicName;
 
-  //On veut enlever les accents
+  // On veut enlever les accents
   pathMusicFull.replace("é", "e");
   pathMusicFull.replace("è", "e");
   pathMusicFull.replace("à", "a");
@@ -311,7 +313,7 @@ bool downloadMusicFile(String musicName, int musicIndex)
 
 void manageMusicDownloadMenu()
 {
-  resetDisplay();
+  //resetDisplay();
 
   currentMenu = DOWNLOADMUSIC;
 
@@ -350,6 +352,11 @@ void manageMusicDownloadMenu()
       showFTPErrorsScreen();
     }
   }
+  else
+  {
+    currentMenu = MAINMENU;
+    return;
+  }
   disconnectFromFTPServer();
   delay(3000);
   currentMenu = MAINMENU;
@@ -371,21 +378,13 @@ void manageMainMenu()
       switch (mainMenuIndex)
       {
       case MAINMENUGETIPINFOSINDEX:
-        // setFTPHost("0.0.0.0");
-        showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
-        while (results.value != LEFT)
-        {
-          if (irrecv.decode(&results))
-          {
-            irrecv.resume();
-          }
-        }
+        currentMenu = GETIPINFOS;
         resetDisplay();
-        updateMainMenu();
         break;
 
       case MAINMENUDOWNLOADMUSICINDEX:
-        manageMusicDownloadMenu();
+        currentMenu = DOWNLOADMUSIC;
+        resetDisplay();
         break;
       case FETCHMUSICFILENAME:
         currentMenu = FETCHMUSICFILENAME;
@@ -397,9 +396,27 @@ void manageMainMenu()
         break;
       }
     }
+    else
+    {
+      break;
+    }
   }
 }
+void manageGetIpInfos()
+{
+  // setFTPHost("0.0.0.0");
+  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
+  while (results.value != LEFT)
+  {
+    if (irrecv.decode(&results))
+    {
+      irrecv.resume();
+    }
+  }
+  currentMenu = MAINMENU;
+  resetDisplay();
 
+}
 void manageFetchMusicFileName()
 {
   resetDisplay();
@@ -443,6 +460,56 @@ void manageChooseMusicMenu()
   Serial.println("End of Ready to display music files");
   delay(5000);
   currentMenu = MAINMENU;
+  irrecv.resume();
+}
+
+void manageRestartConfirmAction()
+{
+  showRestartConfirmActionScreen();
+  while (currentMenu == RESTARTCONFIRMACTION)
+  {
+
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        ESP.restart();
+      }
+      else if (results.value == LEFT)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
+}
+
+void manageAlarmClockMainScreen()
+{
+  showAlarmClockMainScreen();
+  while (currentMenu == ALARMCLOCKMAINSCREEN)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
 }
 
 void setup()
@@ -495,8 +562,6 @@ void setup()
   showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
 
   delay(1000);
-  resetDisplay();
-  updateMainMenu();
 
   uint64_t cardSize = SD.cardSize() / (1024 * 1024);
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
@@ -529,6 +594,15 @@ void loop()
     break;
   case CHOOSEMUSIC:
     manageChooseMusicMenu();
+    break;
+  case RESTARTCONFIRMACTION:
+    manageRestartConfirmAction();
+    break;
+  case ALARMCLOCKMAINSCREEN:
+    manageAlarmClockMainScreen();
+    break;
+  case GETIPINFOS:
+    manageGetIpInfos();
     break;
   }
 }

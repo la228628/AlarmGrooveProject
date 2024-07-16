@@ -16,4 +16,6 @@ const int SETALARMTIME =2;
 const int DOWNLOADMUSIC =3;
 const int GETIPINFOS =4;
 const int FETCHMUSICFILENAME =5;
+const int RESTARTCONFIRMACTION =6;
+const int ALARMCLOCKMAINSCREEN =7;
 const int FATALERROR =-1;

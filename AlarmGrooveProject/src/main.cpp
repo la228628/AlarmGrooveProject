@@ -73,7 +73,7 @@ int mainMenuIndex = 1;
 
 int currentMenu = ALARMCLOCKMAINSCREEN;
 
-char *choosenMusic = "";
+String choosenMusic = "";
 
 bool waitForMenuSelection()
 {
@@ -498,7 +498,7 @@ void manageChooseMusicMenu()
 
   if (musicChoice != -1)
   {
-    choosenMusic = (char *)musicOnSD[musicChoice].c_str();
+    choosenMusic = musicOnSD[musicChoice];
     showMusicChoiceValidationScreen(choosenMusic);
     delay(3000);
   }

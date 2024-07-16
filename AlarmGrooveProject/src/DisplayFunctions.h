@@ -30,9 +30,9 @@ void showRestartConfirmActionScreen();
 
 void showMusicToDownload(const char* musicName, int musicIndex);
 void showMusicOnSD(const char *musicName);
-void showMusicChoiceValidationScreen(const char *musicName);
+void showMusicChoiceValidationScreen(String musicName);
 
-void showAlarmClockMainScreen(char *choosenMusic);
+void showAlarmClockMainScreen(String choosenMusic);
 
 void resetDisplay();
 

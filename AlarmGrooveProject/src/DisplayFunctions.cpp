@@ -357,7 +357,7 @@ void showRestartConfirmActionScreen()
     tft.setTextColor(ILI9341_ORANGE);
     tft.println("Press |<< to cancel");
 }
-void showMusicChoiceValidationScreen(const char *musicName){
+void showMusicChoiceValidationScreen(String musicName){
     tft.fillScreen(ILI9341_GREEN);
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);
@@ -366,7 +366,7 @@ void showMusicChoiceValidationScreen(const char *musicName){
     tft.setCursor(10, 70);
     tft.println(musicName);
 }
-void showAlarmClockMainScreen(char *choosenMusic){
+void showAlarmClockMainScreen(String choosenMusic){
     tft.fillScreen(ILI9341_BLACK);
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);
@@ -379,4 +379,5 @@ void showAlarmClockMainScreen(char *choosenMusic){
     tft.setCursor(10,130);
     tft.println("Music :" );
     tft.print(choosenMusic);
+    Serial.println(choosenMusic);
 }

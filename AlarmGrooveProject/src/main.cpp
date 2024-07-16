@@ -73,6 +73,8 @@ int mainMenuIndex = 1;
 
 int currentMenu = ALARMCLOCKMAINSCREEN;
 
+char *choosenMusic = "";
+
 bool waitForMenuSelection()
 {
   while (true)
@@ -198,6 +200,58 @@ int waitForMusicDownloadIndex(String nameList[])
   }
 }
 
+int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
+{
+
+  int index = 0;
+  int indexmax = numberOfMusicFiles - 1;
+
+  showMusicOnSD(musicList[index].c_str());
+
+  while (currentMenu == CHOOSEMUSIC)
+  {
+
+    if (irrecv.decode(&results))
+    {
+
+      if (results.value == PAUSE)
+      {
+        irrecv.resume();
+        return index;
+      }
+      else if (results.value == UP)
+      {
+        if (index == 0)
+        {
+          index = indexmax;
+        }
+        else
+        {
+          index--;
+        }
+      }
+      else if (results.value == DOWN)
+      {
+        if (index == indexmax)
+        {
+          index = 0;
+        }
+        else
+        {
+          index++;
+        }
+      }
+      else if (results.value == LEFT)
+      {
+        return -1;
+        irrecv.resume();
+      }
+      showMusicOnSD(musicList[index].c_str());
+      irrecv.resume();
+    }
+  }
+}
+
 bool downloadNameMusicFile()
 {
 
@@ -313,7 +367,7 @@ bool downloadMusicFile(String musicName, int musicIndex)
 
 void manageMusicDownloadMenu()
 {
-  //resetDisplay();
+ 
 
   currentMenu = DOWNLOADMUSIC;
 
@@ -360,12 +414,11 @@ void manageMusicDownloadMenu()
   disconnectFromFTPServer();
   delay(3000);
   currentMenu = MAINMENU;
-  resetDisplay();
-  updateMainMenu();
 }
 
 void manageMainMenu()
 {
+  resetDisplay();
 
   updateMainMenu();
 
@@ -379,20 +432,16 @@ void manageMainMenu()
       {
       case MAINMENUGETIPINFOSINDEX:
         currentMenu = GETIPINFOS;
-        resetDisplay();
         break;
 
       case MAINMENUDOWNLOADMUSICINDEX:
         currentMenu = DOWNLOADMUSIC;
-        resetDisplay();
         break;
       case FETCHMUSICFILENAME:
         currentMenu = FETCHMUSICFILENAME;
-        resetDisplay();
         break;
       case MAINMENUSETMUSICINDEX:
         currentMenu = CHOOSEMUSIC;
-        resetDisplay();
         break;
       }
     }
@@ -414,8 +463,6 @@ void manageGetIpInfos()
     }
   }
   currentMenu = MAINMENU;
-  resetDisplay();
-
 }
 void manageFetchMusicFileName()
 {
@@ -433,12 +480,12 @@ void manageFetchMusicFileName()
   disconnectFromFTPServer();
   delay(3000);
   currentMenu = MAINMENU;
-  resetDisplay();
-  updateMainMenu();
+
 }
 
 void manageChooseMusicMenu()
 {
+  resetDisplay();
   String musicOnSD[255];
   int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
 
@@ -447,20 +494,19 @@ void manageChooseMusicMenu()
     currentMenu = MAINMENU;
     return;
   }
+  int musicChoice = waitForMusicToSet(musicOnSD, numberOfMusicFiles);
 
-  Serial.println("Ready to display music files: ");
-  Serial.print(numberOfMusicFiles);
-
-  for (int i = 0; i < numberOfMusicFiles; i++)
+  if (musicChoice != -1)
   {
-    tft.setCursor(10, 10 + i * 20);
-    tft.println(musicOnSD[i]);
-    Serial.println(musicOnSD[i]);
+    choosenMusic = (char *)musicOnSD[musicChoice].c_str();
+    showMusicChoiceValidationScreen(choosenMusic);
+    delay(3000);
   }
-  Serial.println("End of Ready to display music files");
-  delay(5000);
+
   currentMenu = MAINMENU;
+
   irrecv.resume();
+  return;
 }
 
 void manageRestartConfirmAction()
@@ -492,7 +538,7 @@ void manageRestartConfirmAction()
 
 void manageAlarmClockMainScreen()
 {
-  showAlarmClockMainScreen();
+  showAlarmClockMainScreen(choosenMusic);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
     if (irrecv.decode(&results))

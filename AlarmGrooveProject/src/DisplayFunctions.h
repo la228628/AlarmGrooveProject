@@ -29,8 +29,10 @@ void showDownloadMusicWaitingScreen();
 void showRestartConfirmActionScreen();
 
 void showMusicToDownload(const char* musicName, int musicIndex);
+void showMusicOnSD(const char *musicName);
+void showMusicChoiceValidationScreen(const char *musicName);
 
-void showAlarmClockMainScreen();
+void showAlarmClockMainScreen(char *choosenMusic);
 
 void resetDisplay();
 

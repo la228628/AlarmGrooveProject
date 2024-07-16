@@ -255,6 +255,32 @@ void showMusicToDownload(const char *musicName, int musicIndex)
     tft.println("Press |<< to go back to the main menu");
 }
 
+void showMusicOnSD(const char *musicName){
+    resetDisplay();
+
+    tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
+    tft.fillRect(5, 5, 310, 50, ILI9341_DARKGREY);
+
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setTextSize(2);
+    tft.setCursor(10, 20);
+    tft.println("Select the music you want to set for alarm");
+
+    tft.drawLine(5, 60, 315, 60, ILI9341_WHITE);
+
+    tft.setTextSize(1);
+    tft.setCursor(10, 70);
+    tft.println("Press PAUSE to confirm");
+
+    tft.setCursor(10, 90);
+    tft.setTextColor(ILI9341_YELLOW);
+    tft.println(musicName);
+
+    tft.setCursor(10, 110);
+    tft.setTextColor(ILI9341_ORANGE);
+    tft.println("Press |<< to go back to the main menu");
+}
+
 void showFatalErrorScreen()
 {
     tft.fillScreen(ILI9341_RED);
@@ -331,8 +357,16 @@ void showRestartConfirmActionScreen()
     tft.setTextColor(ILI9341_ORANGE);
     tft.println("Press |<< to cancel");
 }
-
-void showAlarmClockMainScreen(){
+void showMusicChoiceValidationScreen(const char *musicName){
+    tft.fillScreen(ILI9341_GREEN);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("The alarm music is now :");
+    tft.setCursor(10, 70);
+    tft.println(musicName);
+}
+void showAlarmClockMainScreen(char *choosenMusic){
     tft.fillScreen(ILI9341_BLACK);
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);
@@ -342,4 +376,7 @@ void showAlarmClockMainScreen(){
     tft.println("This feature is not implemented yet");
     tft.setCursor(10, 90);
     tft.println("Press PAUSE to go to the main menu");
+    tft.setCursor(10,130);
+    tft.println("Music :" );
+    tft.print(choosenMusic);
 }

@@ -17,8 +17,8 @@ const char *password = passwordToConnect;
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-#include "SoftwareSerial.h"
-#include "DFRobotDFPlayerMini.h"
+//#include "SoftwareSerial.h"
+//#include "DFRobotDFPlayerMini.h"
 
 // Define the pins used for the display
 #define TFT_CS 15
@@ -50,10 +50,10 @@ int Player_state = 13;
 // Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
-SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
+//SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
 
 // Create the Player object
-DFRobotDFPlayerMini player;
+//DFRobotDFPlayerMini player;
 
 // An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
 // board).
@@ -561,9 +561,13 @@ void manageAlarmClockMainScreen()
 void setup()
 {
 
+  
+
   Serial.begin(115200);
   Serial2.begin(115200);
-
+  Serial.println(ESP.getFlashChipSize());
+  Serial.println(ESP.getChipModel());
+  Serial.println(ESP.getFlashChipMode());
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
     delay(100);

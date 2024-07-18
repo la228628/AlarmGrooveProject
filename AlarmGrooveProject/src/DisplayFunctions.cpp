@@ -342,7 +342,40 @@ void showDownloadMusicWaitingScreen(){
     tft.println("Please do not turn off the device");
 }
 
+void showModeChoiceScreen(){
 
+tft.fillScreen(ILI9341_BLACK);
+tft.setTextSize(1);
+tft.drawRect(0, 0, 160, 240, 0xFFFF);
+tft.drawRect(160, 0, 160, 240, 0xFFFF);
+tft.setTextColor(0xFFFF);
+tft.setCursor(180, 7);
+tft.print("CONFIGURATION MODE");
+tft.setCursor(45, 8);
+tft.print("ALARM CLOCK MODE");
+tft.setTextColor(0xFC00);
+tft.setCursor(204, 28);
+tft.print("PRESS >>|");
+tft.setCursor(64, 28);
+tft.print("PRESS |<<");
+tft.setTextColor(0xFFFF);
+tft.setCursor(7, 59);
+tft.print("IN THIS MODE YOU NEED TO ");
+tft.setCursor(12, 81);
+tft.print("PUT THE SD CARD IN THE");
+tft.setTextColor(0xA800);
+tft.setCursor(188, 112);
+tft.print(" DOWNLOADER SLOT");
+tft.setCursor(28, 112);
+tft.print(" MUSIC PLAYER SLOT");
+tft.setTextColor(0xFFFF);
+tft.setCursor(168, 59);
+tft.print("IN THIS MODE YOU NEED TO ");
+tft.setCursor(174, 80);
+tft.print("PUT THE SD CARD IN THE");
+
+
+}
 void showRestartConfirmActionScreen()
 {
     tft.fillScreen(ILI9341_BLACK);

@@ -34,6 +34,8 @@ void showMusicChoiceValidationScreen(String musicName);
 
 void showAlarmClockMainScreen(String choosenMusic);
 
+void showModeChoiceScreen();
+
 void resetDisplay();
 
 #endif // DISPLAYFUNCTIONS_H

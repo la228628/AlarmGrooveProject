@@ -19,3 +19,6 @@ const int FETCHMUSICFILENAME =5;
 const int RESTARTCONFIRMACTION =6;
 const int ALARMCLOCKMAINSCREEN =7;
 const int FATALERROR =-1;
+
+const int MENUMODE = 0;
+const int ALARMCLOCKMODE = 1;

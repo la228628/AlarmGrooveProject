@@ -17,8 +17,8 @@ const char *password = passwordToConnect;
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-//#include "SoftwareSerial.h"
-//#include "DFRobotDFPlayerMini.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
 // Define the pins used for the display
 #define TFT_CS 15
@@ -50,10 +50,10 @@ int Player_state = 13;
 // Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
-//SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
+SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
 
 // Create the Player object
-//DFRobotDFPlayerMini player;
+DFRobotDFPlayerMini player ;
 
 // An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
 // board).
@@ -71,9 +71,11 @@ decode_results results;
 
 int mainMenuIndex = 1;
 
-int currentMenu = ALARMCLOCKMAINSCREEN;
+int currentMenu = MAINMENU;
 
 String choosenMusic = "";
+
+int currentMode = MENUMODE;
 
 bool waitForMenuSelection()
 {
@@ -115,11 +117,6 @@ bool waitForMenuSelection()
       else if (results.value == POWER)
       {
         currentMenu = RESTARTCONFIRMACTION;
-        return false;
-      }
-      else if (results.value == LEFT)
-      {
-        currentMenu = ALARMCLOCKMAINSCREEN;
         return false;
       }
       else
@@ -367,7 +364,6 @@ bool downloadMusicFile(String musicName, int musicIndex)
 
 void manageMusicDownloadMenu()
 {
- 
 
   currentMenu = DOWNLOADMUSIC;
 
@@ -480,7 +476,6 @@ void manageFetchMusicFileName()
   disconnectFromFTPServer();
   delay(3000);
   currentMenu = MAINMENU;
-
 }
 
 void manageChooseMusicMenu()
@@ -539,14 +534,46 @@ void manageRestartConfirmAction()
 void manageAlarmClockMainScreen()
 {
   showAlarmClockMainScreen(choosenMusic);
-  while (currentMenu == ALARMCLOCKMAINSCREEN)
+  while (currentMode == ALARMCLOCKMODE)
   {
     if (irrecv.decode(&results))
     {
       Serial.println(results.value);
       if (results.value == PAUSE)
       {
-        currentMenu = MAINMENU;
+        //currentMenu = MAINMENU;
+       
+        Serial.println("Files in folder 1: ");
+        Serial.println(player.readFileCounts());
+        player.volume(10);
+        player.play(1);
+        irrecv.resume();
+        
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
+}
+
+
+void(manageModeChoosing)()
+{
+  showModeChoiceScreen();
+  while (currentMode == MENUMODE)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == LEFT)
+      {
+        currentMode = ALARMCLOCKMODE;
+        irrecv.resume();
+        return;
+      }else if(results.value == RIGHT){
+        currentMode = MENUMODE;
         irrecv.resume();
         return;
       }
@@ -561,13 +588,9 @@ void manageAlarmClockMainScreen()
 void setup()
 {
 
-  
-
   Serial.begin(115200);
   Serial2.begin(115200);
-  Serial.println(ESP.getFlashChipSize());
-  Serial.println(ESP.getChipModel());
-  Serial.println(ESP.getFlashChipMode());
+  softwareSerial.begin(9600);
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
     delay(100);
@@ -582,39 +605,54 @@ void setup()
 
   tft.fillScreen(ILI9341_BLACK);
 
-  if (!SD_Initialize())
+  manageModeChoosing();
+
+  if (currentMode == ALARMCLOCKMODE)
   {
-    Serial.println("Card Mount Failed");
-    showCartMountFailed();
+    pinMode(Player_state, OUTPUT);
+    digitalWrite(Player_state, HIGH);
+    
+    if(player.begin(softwareSerial, false, false) == false){
+      currentMenu = FATALERROR;
+      }
+  }
+  else if (currentMode == MENUMODE)
+  {
+
+    if (!SD_Initialize())
+    {
+      Serial.println("Card Mount Failed");
+      showCartMountFailed();
+      delay(1000);
+      currentMenu = FATALERROR;
+      return;
+    }
+    else
+    {
+      showCartMountSuccess();
+    }
+
     delay(1000);
-    currentMenu = FATALERROR;
-    return;
+
+    WiFi.begin(ssid, password);
+
+    showWifiConnectionWaitScreen();
+    while (WiFi.status() != WL_CONNECTED)
+    {
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+
+    delay(1000);
+
+    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+    Serial.printf("SD Card Size: %lluMB\n", cardSize);
   }
-  else
-  {
-    showCartMountSuccess();
-  }
-
-  delay(1000);
-
-  WiFi.begin(ssid, password);
-
-  showWifiConnectionWaitScreen();
-  while (WiFi.status() != WL_CONNECTED)
-  {
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
-
-  delay(1000);
-
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
 }
 
 void loop()
@@ -631,28 +669,33 @@ void loop()
     }
   }
 
-  switch (currentMenu)
+  if (currentMode == ALARMCLOCKMODE)
   {
-  case DOWNLOADMUSIC:
-    manageMusicDownloadMenu();
-    break;
-  case MAINMENU:
-    manageMainMenu();
-    break;
-  case FETCHMUSICFILENAME:
-    manageFetchMusicFileName();
-    break;
-  case CHOOSEMUSIC:
-    manageChooseMusicMenu();
-    break;
-  case RESTARTCONFIRMACTION:
-    manageRestartConfirmAction();
-    break;
-  case ALARMCLOCKMAINSCREEN:
     manageAlarmClockMainScreen();
-    break;
-  case GETIPINFOS:
-    manageGetIpInfos();
-    break;
+  }
+  else if (currentMode == MENUMODE)
+  {
+
+    switch (currentMenu)
+    {
+    case DOWNLOADMUSIC:
+      manageMusicDownloadMenu();
+      break;
+    case MAINMENU:
+      manageMainMenu();
+      break;
+    case FETCHMUSICFILENAME:
+      manageFetchMusicFileName();
+      break;
+    case CHOOSEMUSIC:
+      manageChooseMusicMenu();
+      break;
+    case RESTARTCONFIRMACTION:
+      manageRestartConfirmAction();
+      break;
+    case GETIPINFOS:
+      manageGetIpInfos();
+      break;
+    }
   }
 }

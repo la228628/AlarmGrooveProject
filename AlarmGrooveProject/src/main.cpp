@@ -16,7 +16,6 @@ const char *password = passwordToConnect;
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-#include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
 
 // Define the pins used for the display
@@ -49,8 +48,7 @@ int Player_state = 13;
 // Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
-SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
-
+#define DFPSerial Serial1
 // Create the Player object
 DFRobotDFPlayerMini player;
 
@@ -74,14 +72,9 @@ int currentMenu = ALARMCLOCKMAINSCREEN;
 
 int choosenMusic = 1;
 int musicVolume = 2;
+int folderCount = 0;
 
-void stopMusic()
-{
-  if (player.readState() == 1)
-  {
-    player.stop();
-  }
-}
+
 
 bool waitForMenuSelection()
 {
@@ -156,16 +149,13 @@ int waitForMusicToSet(int numberOfMusicFiles)
 
       if (results.value == PAUSE)
       {
-        if (player.readState() == 1)
-        {
-          player.stop();
-        }
+        player.stop();
         irrecv.resume();
         return index;
       }
       else if (results.value == UP)
       {
-        stopMusic();
+        player.stop();
         if (index == 1)
         {
           index = indexmax;
@@ -178,7 +168,7 @@ int waitForMusicToSet(int numberOfMusicFiles)
       }
       else if (results.value == DOWN)
       {
-        stopMusic();
+        player.stop();
         if (index == indexmax)
         {
           index = 1;
@@ -192,7 +182,7 @@ int waitForMusicToSet(int numberOfMusicFiles)
       else if (results.value == LEFT)
       {
 
-        stopMusic();
+        player.stop();
         return -1;
         irrecv.resume();
       }
@@ -218,7 +208,6 @@ void manageMainMenu()
   resetDisplay();
 
   updateMainMenu();
-  stopMusic();
 
   while (currentMenu == MAINMENU)
   {
@@ -233,10 +222,10 @@ void manageMainMenu()
         break;
 
       case MAINMENUDOWNLOADMUSICINDEX:
-        currentMenu = DOWNLOADMUSIC;
+        // currentMenu = DOWNLOADMUSIC;
         break;
       case FETCHMUSICFILENAME:
-        currentMenu = FETCHMUSICFILENAME;
+        // currentMenu = FETCHMUSICFILENAME;
         break;
       case MAINMENUSETMUSICINDEX:
         currentMenu = CHOOSEMUSIC;
@@ -265,7 +254,7 @@ void manageGetIpInfos()
 void manageChooseMusicMenu()
 {
   resetDisplay();
-  int numberOfMusicFiles = 200;
+  int numberOfMusicFiles = folderCount;
 
   if (numberOfMusicFiles == -1)
   {
@@ -339,7 +328,7 @@ void setup()
 {
 
   Serial.begin(115200);
-  Serial2.begin(115200);
+  // Serial2.begin(115200);
 
   // pinMode(Player_state, OUTPUT);
 
@@ -378,8 +367,26 @@ void setup()
 
   delay(1000);
 
-  softwareSerial.begin(9600);
-  player.begin(softwareSerial);
+  DFPSerial.begin(9600, SERIAL_8N1, /*rx =*/26, /*tx =*/27);
+
+  Serial.println();
+  Serial.println(F("DFPlayer Mini Demo"));
+
+  if (!player.begin(DFPSerial, /*isACK = */ true, /*doReset = */ true))
+  {
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    showFatalErrorScreen();
+    while (true)
+      ;
+  }
+
+  player.stop();
+  int count = player.readFileCounts();
+  int fCount = player.readFolderCounts();
+  folderCount = fCount;
+
   player.volume(musicVolume);
 }
 

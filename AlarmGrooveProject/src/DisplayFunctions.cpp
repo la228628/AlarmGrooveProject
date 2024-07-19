@@ -91,7 +91,7 @@ void updateMainMenu()
     selectMenuIndex();
 }
 
-void showIpInformations(const char *ip, const char *mask, const char *gateway, char *ftpHost, const char *ssid)
+void showIpInformations(const char *ip, const char *mask, const char *gateway, const char *ssid)
 {
     tft.fillScreen(ILI9341_BLACK);
 
@@ -122,20 +122,12 @@ void showIpInformations(const char *ip, const char *mask, const char *gateway, c
     tft.setCursor(10, 110);
     tft.println(gateway);
 
-    // Display FTP Server
-    tft.setTextColor(ILI9341_CYAN); // Label color
-    tft.setCursor(10, 130);
-    tft.println("FTP SERVER: ");
-    tft.setTextColor(ILI9341_WHITE); // Value color
-    tft.setCursor(10, 150);
-    tft.println(ftpHost);
-
     // Display SSID
     tft.setTextColor(ILI9341_CYAN); // Label color
-    tft.setCursor(10, 170);
+    tft.setCursor(10, 130);
     tft.println("SSID: ");
     tft.setTextColor(ILI9341_WHITE); // Value color
-    tft.setCursor(10, 190);
+    tft.setCursor(10, 150);
     tft.println(ssid);
 
     tft.setTextSize(1);
@@ -143,12 +135,8 @@ void showIpInformations(const char *ip, const char *mask, const char *gateway, c
     tft.setTextColor(ILI9341_ORANGE);
     tft.println("Press |<< to return to the main menu");
 
-
     // Optional: Draw a border around the text area
     tft.drawRect(5, 5, tft.width() - 10, tft.height() - 10, ILI9341_WHITE);
-
-    
-    
 }
 
 void showWelcomeScreen()
@@ -185,22 +173,6 @@ void showWelcomeScreen()
     tft.drawBitmap(27, 41, image_music_bits, 14, 16, 0xFFFF);
     tft.drawBitmap(18, 177, image_music_bits, 14, 16, 0xFFFF);
 }
-void showCartMountFailed()
-{
-    tft.fillScreen(ILI9341_RED);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Card Mount Failed. Please check the card and restart the device.");
-}
-void showCartMountSuccess()
-{
-    tft.fillScreen(ILI9341_GREEN);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Card Mount Success");
-}
 
 void showWifiConnectionWaitScreen()
 {
@@ -226,36 +198,8 @@ void showWifiConnectionSuccessScreen(const char *ip)
     tft.println(ip);
 }
 
-void showMusicToDownload(const char *musicName, int musicIndex)
+void showMusicOnSD(int musicIndex)
 {
-    resetDisplay();
-
-    tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
-    tft.fillRect(5, 5, 310, 50, ILI9341_DARKGREY);
-
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setTextSize(2);
-    tft.setCursor(10, 20);
-    tft.println("Select the music you want       to download");
-
-    tft.drawLine(5, 60, 315, 60, ILI9341_WHITE);
-
-    tft.setTextSize(1);
-    tft.setCursor(10, 70);
-    tft.println("Press PAUSE to confirm");
-
-    tft.setCursor(10, 90);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.print(musicIndex);
-    tft.print(" - ");
-    tft.println(musicName);
-
-    tft.setCursor(10, 110);
-    tft.setTextColor(ILI9341_ORANGE);
-    tft.println("Press |<< to go back to the main menu");
-}
-
-void showMusicOnSD(const char *musicName){
     resetDisplay();
 
     tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
@@ -274,9 +218,14 @@ void showMusicOnSD(const char *musicName){
 
     tft.setCursor(10, 90);
     tft.setTextColor(ILI9341_YELLOW);
-    tft.println(musicName);
+    tft.println("Tack number : ");
+    tft.print(musicIndex);
 
     tft.setCursor(10, 110);
+    tft.setTextColor(ILI9341_ORANGE);
+    tft.println("Press 1 to play the music/ stop the music");
+
+    tft.setCursor(10, 130);
     tft.setTextColor(ILI9341_ORANGE);
     tft.println("Press |<< to go back to the main menu");
 }
@@ -292,57 +241,6 @@ void showFatalErrorScreen()
     tft.println("Please check the card and restart the device.");
 }
 
-void showFetchMusicFilesNameScreen()
-{
-    tft.fillScreen(ILI9341_BLACK);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Fetching music files name from the server");
-    tft.setCursor(10, 50);
-    tft.println("Please wait...");
-}
-
-void showFTPErrorsScreen()
-{
-    tft.fillScreen(ILI9341_RED);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("FTP Error Occured");
-    tft.setCursor(10, 30);
-    tft.println("Please check the FTP server and restart the device.");
-}
-
-void showFetchMusicFilesNameSucessScreen(){
-    tft.fillScreen(ILI9341_GREEN);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Music files name fetched successfully");
-}
-void showMusicDownloadSuccessScreen(){
-    tft.fillScreen(ILI9341_GREEN);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Music downloaded successfully");
-}
-void showDownloadMusicWaitingScreen(){
-    tft.fillScreen(ILI9341_BLACK);
-    tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Downloading music");
-    tft.setCursor(10, 30);
-    tft.println("Please wait...");
-    tft.setCursor(10, 50);
-    tft.println("This may take a while");
-    tft.setCursor(10, 70);
-    tft.println("Please do not turn off the device");
-}
-
-
 void showRestartConfirmActionScreen()
 {
     tft.fillScreen(ILI9341_BLACK);
@@ -357,27 +255,76 @@ void showRestartConfirmActionScreen()
     tft.setTextColor(ILI9341_ORANGE);
     tft.println("Press |<< to cancel");
 }
-void showMusicChoiceValidationScreen(String musicName){
+void showMusicChoiceValidationScreen(int music)
+{
     tft.fillScreen(ILI9341_GREEN);
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);
     tft.setCursor(10, 10);
     tft.println("The alarm music is now :");
     tft.setCursor(10, 70);
-    tft.println(musicName);
+    tft.print("Track ");
+    tft.print(music);
 }
-void showAlarmClockMainScreen(String choosenMusic){
-    tft.fillScreen(ILI9341_BLACK);
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume)
+{
+    resetDisplay();
+    static const unsigned char PROGMEM image_music_play_button_bits[] = {0x07, 0xc0, 0x18, 0x30, 0x20, 0x08, 0x40, 0x04, 0x4c, 0x04, 0x8b, 0x82, 0x88, 0x62, 0x88, 0x1a, 0x88, 0x62, 0x8b, 0x82, 0x4c, 0x04, 0x40, 0x04, 0x20, 0x08, 0x18, 0x30, 0x07, 0xc0};
+    static const unsigned char PROGMEM image_weather_temperature_bits[] = {0x1c, 0x00, 0x22, 0x02, 0x2b, 0x05, 0x2a, 0x02, 0x2b, 0x38, 0x2a, 0x60, 0x2b, 0x40, 0x2a, 0x40, 0x2a, 0x60, 0x49, 0x38, 0x9c, 0x80, 0xae, 0x80, 0xbe, 0x80, 0x9c, 0x80, 0x41, 0x00, 0x3e, 0x00};
+    static const unsigned char PROGMEM image_volume_loud_bits[] = {0x01, 0xc1, 0x00, 0x02, 0x40, 0x80, 0x04, 0x44, 0x40, 0x08, 0x42, 0x20, 0xf0, 0x51, 0x20, 0x80, 0x49, 0x10, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x49, 0x10, 0xf0, 0x51, 0x20, 0x08, 0x42, 0x20, 0x04, 0x44, 0x40, 0x02, 0x40, 0x80, 0x01, 0xc1, 0x00, 0x00, 0x00, 0x00};
+    static const unsigned char PROGMEM image_location_map_bits[] = {0x03, 0x80, 0x04, 0x40, 0x09, 0x20, 0x12, 0x90, 0x12, 0x90, 0x11, 0x10, 0x08, 0x20, 0x04, 0x40, 0x04, 0x40, 0x1a, 0xb0, 0x21, 0x08, 0x21, 0x08, 0x40, 0x04, 0x40, 0x04, 0x9c, 0x72, 0xe3, 0x8e};
+    static const unsigned char PROGMEM image_clock_alarm_bits[] = {0x79, 0x3c, 0xb3, 0x9a, 0xed, 0x6e, 0xd0, 0x16, 0xa0, 0x0a, 0x41, 0x04, 0x41, 0x04, 0x81, 0x02, 0xc1, 0x06, 0x82, 0x02, 0x44, 0x04, 0x48, 0x04, 0x20, 0x08, 0x10, 0x10, 0x2d, 0x68, 0x43, 0x84};
+    tft.drawCircle(157, 117, 67, 0xFFFF);
+    tft.setTextColor(0xFFFF);
+    tft.setTextSize(3);
+    tft.setCursor(149, 103);
+    tft.print(":");
+    tft.setCursor(175, 104);
+    tft.print("00");
+    tft.setCursor(106, 104);
+    tft.print("00");
+    tft.drawBitmap(5, 196, image_music_play_button_bits, 15, 15, 0xFFFF);
+    tft.setTextSize(1);
+    tft.setCursor(28, 199);
+    tft.print("TRACK");
+    tft.drawBitmap(245, 8, image_weather_temperature_bits, 16, 16, 0xFFFF);
     tft.setTextSize(2);
-    tft.setTextColor(ILI9341_WHITE);
-    tft.setCursor(10, 10);
-    tft.println("Alarm Clock");
-    tft.setCursor(10, 50);
-    tft.println("This feature is not implemented yet");
-    tft.setCursor(10, 90);
-    tft.println("Press PAUSE to go to the main menu");
-    tft.setCursor(10,130);
-    tft.println("Music :" );
+    tft.setCursor(268, 10);
+    tft.print("to");
+    tft.drawCircle(292, 6, 2, 0xFFFF);
+    tft.setCursor(300, 10);
+    tft.print("C");
+    tft.drawBitmap(4, 217, image_volume_loud_bits, 20, 16, 0xFFFF);
+    tft.setTextSize(1);
+    tft.setCursor(31, 221);
+    tft.print(musicVolume);
+    tft.setCursor(35, 14);
+    tft.print("Lat: ");
+    tft.setCursor(35, 28);
+    tft.print("Long: ");
+    tft.drawBitmap(10, 9, image_location_map_bits, 15, 16, 0xFFFF);
+    tft.setCursor(67, 28);
+    tft.print("0.0000 ");
+    tft.setCursor(67, 14);
+    tft.print("0.0000 ");
+    tft.setTextColor(0xFC00);
+    tft.setCursor(145, 215);
+    tft.print("PRESS PAUSE TO GO TO MENU");
+    tft.setTextColor(0xFFFF);
+    tft.setTextSize(2);
+    tft.setCursor(238, 100);
+    tft.print("GROOVE");
+    tft.setCursor(10, 100);
+    tft.print("ALARM");
+    tft.setTextSize(1);
+    tft.setCursor(63, 199);
     tft.print(choosenMusic);
-    Serial.println(choosenMusic);
+    tft.drawBitmap(220, 160, image_clock_alarm_bits, 15, 16, 0xFFFF);
+    tft.setTextSize(2);
+    tft.setCursor(281, 161);
+    tft.print("30");
+    tft.setCursor(244, 161);
+    tft.print("07");
+    tft.setCursor(268, 160);
+    tft.print(":");
 }

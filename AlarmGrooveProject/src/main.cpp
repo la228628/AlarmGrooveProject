@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "simple_ftp_client.h"
-#include "SD_card_helper.h"
+#include <Wifi.h>
 
 char *ssidToConnect = "WiFi-2.4-2D90";
 char *passwordToConnect = "wws7db5j9bu4k";
@@ -17,8 +16,8 @@ const char *password = passwordToConnect;
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-//#include "SoftwareSerial.h"
-//#include "DFRobotDFPlayerMini.h"
+#include "SoftwareSerial.h"
+#include "DFRobotDFPlayerMini.h"
 
 // Define the pins used for the display
 #define TFT_CS 15
@@ -50,10 +49,10 @@ int Player_state = 13;
 // Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
-//SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
+SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
 
 // Create the Player object
-//DFRobotDFPlayerMini player;
+DFRobotDFPlayerMini player;
 
 // An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
 // board).
@@ -73,7 +72,16 @@ int mainMenuIndex = 1;
 
 int currentMenu = ALARMCLOCKMAINSCREEN;
 
-String choosenMusic = "";
+int choosenMusic = 1;
+int musicVolume = 2;
+
+void stopMusic()
+{
+  if (player.readState() == 1)
+  {
+    player.stop();
+  }
+}
 
 bool waitForMenuSelection()
 {
@@ -132,81 +140,13 @@ bool waitForMenuSelection()
   }
 }
 
-int waitForMusicDownloadIndex(String nameList[])
-{
-  int index = 0;
-  int indexMax = -1;
-
-  for (int i = 0; i < 255; i++)
-  {
-    if (nameList[i] != "")
-    {
-      indexMax++;
-    }
-  }
-  showMusicToDownload(nameList[index].c_str(), index);
-
-  while (currentMenu == DOWNLOADMUSIC)
-  {
-    if (irrecv.decode(&results))
-    {
-      if (results.value == PAUSE)
-      {
-        irrecv.resume();
-        return index;
-      }
-      else if (results.value == UP)
-      {
-        if (index > 0)
-        {
-          index--;
-        }
-        else
-        {
-          index = indexMax;
-        }
-
-        showMusicToDownload(nameList[index].c_str(), index);
-
-        irrecv.resume();
-      }
-      else if (results.value == DOWN)
-      {
-        if (index < indexMax)
-        {
-          index++;
-        }
-        else
-        {
-          index = 0;
-        }
-
-        showMusicToDownload(nameList[index].c_str(), index);
-
-        irrecv.resume();
-      }
-      else if (results.value == LEFT)
-      {
-        irrecv.resume();
-        return -1;
-      }
-      else
-      {
-        irrecv.resume();
-      }
-    }
-    Serial.println(index);
-    delay(50);
-  }
-}
-
-int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
+int waitForMusicToSet(int numberOfMusicFiles)
 {
 
-  int index = 0;
-  int indexmax = numberOfMusicFiles - 1;
+  int index = 1;
+  int indexmax = numberOfMusicFiles;
 
-  showMusicOnSD(musicList[index].c_str());
+  showMusicOnSD(index);
 
   while (currentMenu == CHOOSEMUSIC)
   {
@@ -216,12 +156,17 @@ int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
 
       if (results.value == PAUSE)
       {
+        if (player.readState() == 1)
+        {
+          player.stop();
+        }
         irrecv.resume();
         return index;
       }
       else if (results.value == UP)
       {
-        if (index == 0)
+        stopMusic();
+        if (index == 1)
         {
           index = indexmax;
         }
@@ -229,191 +174,43 @@ int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
         {
           index--;
         }
+        showMusicOnSD(index);
       }
       else if (results.value == DOWN)
       {
+        stopMusic();
         if (index == indexmax)
         {
-          index = 0;
+          index = 1;
         }
         else
         {
           index++;
         }
+        showMusicOnSD(index);
       }
       else if (results.value == LEFT)
       {
+
+        stopMusic();
         return -1;
         irrecv.resume();
       }
-      showMusicOnSD(musicList[index].c_str());
+      else if (results.value == ONE)
+      {
+        Serial.println(player.readState());
+        if (player.readState() == 1)
+        {
+          player.stop();
+        }
+        else
+        {
+          player.play(index);
+        }
+      }
       irrecv.resume();
     }
   }
-}
-
-bool downloadNameMusicFile()
-{
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of connection error");
-    return false;
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of login error");
-    return false;
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  // sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-  if (downloadFileFromFTP("/names/names.txt", 0, "") == false)
-  {
-    Serial.println("File Download Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of download error");
-    return false;
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-  return true;
-
-  delay(5000);
-}
-
-bool downloadMusicFile(String musicName, int musicIndex)
-{
-
-  String pathMusicFull = "/music/" + musicName;
-
-  // On veut enlever les accents
-  pathMusicFull.replace("é", "e");
-  pathMusicFull.replace("è", "e");
-  pathMusicFull.replace("à", "a");
-  pathMusicFull.replace("ç", "c");
-  pathMusicFull.replace("ù", "u");
-  pathMusicFull.replace("â", "a");
-  pathMusicFull.replace("ê", "e");
-  pathMusicFull.replace("î", "i");
-
-  const char *pathMusicFullToChar = pathMusicFull.c_str();
-
-  const char *pathMusicName = musicName.c_str();
-
-  Serial.println(pathMusicName);
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-    return false;
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-    return false;
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-  if (downloadFileFromFTP(pathMusicFullToChar, musicIndex, pathMusicName) == false)
-  {
-    Serial.println("File Download Failed");
-    return false;
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-  return true;
-}
-
-void manageMusicDownloadMenu()
-{
- 
-
-  currentMenu = DOWNLOADMUSIC;
-
-  int musicToDownloadIndex = 0;
-
-  int numberOfMusicFiles = 0;
-
-  String nameList[255];
-  if (getLinesFromTxtFile("/names/names.txt", nameList))
-  {
-    for (int i = 0; i < 255; i++)
-    {
-      if (nameList[i] != "")
-        Serial.println(nameList[i]);
-      numberOfMusicFiles++;
-    }
-  }
-  else
-  {
-    Serial.println("Failed to get names from file");
-  }
-
-  tft.setTextSize(2);
-
-  musicToDownloadIndex = waitForMusicDownloadIndex(nameList);
-
-  if (musicToDownloadIndex != -1)
-  {
-    showDownloadMusicWaitingScreen();
-    if (downloadMusicFile(nameList[musicToDownloadIndex], musicToDownloadIndex))
-    {
-      showMusicDownloadSuccessScreen();
-    }
-    else
-    {
-      showFTPErrorsScreen();
-    }
-  }
-  else
-  {
-    currentMenu = MAINMENU;
-    return;
-  }
-  disconnectFromFTPServer();
-  delay(3000);
-  currentMenu = MAINMENU;
 }
 
 void manageMainMenu()
@@ -421,6 +218,7 @@ void manageMainMenu()
   resetDisplay();
 
   updateMainMenu();
+  stopMusic();
 
   while (currentMenu == MAINMENU)
   {
@@ -453,8 +251,7 @@ void manageMainMenu()
 }
 void manageGetIpInfos()
 {
-  // setFTPHost("0.0.0.0");
-  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
+  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), WiFi.SSID().c_str());
   while (results.value != LEFT)
   {
     if (irrecv.decode(&results))
@@ -464,47 +261,27 @@ void manageGetIpInfos()
   }
   currentMenu = MAINMENU;
 }
-void manageFetchMusicFileName()
-{
-  resetDisplay();
-  showFetchMusicFilesNameScreen();
-
-  if (downloadNameMusicFile())
-  {
-    showFetchMusicFilesNameSucessScreen();
-  }
-  else
-  {
-    showFTPErrorsScreen();
-  }
-  disconnectFromFTPServer();
-  delay(3000);
-  currentMenu = MAINMENU;
-
-}
 
 void manageChooseMusicMenu()
 {
   resetDisplay();
-  String musicOnSD[255];
-  int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
+  int numberOfMusicFiles = 200;
 
   if (numberOfMusicFiles == -1)
   {
     currentMenu = MAINMENU;
     return;
   }
-  int musicChoice = waitForMusicToSet(musicOnSD, numberOfMusicFiles);
+  int musicChoice = waitForMusicToSet(numberOfMusicFiles);
 
   if (musicChoice != -1)
   {
-    choosenMusic = musicOnSD[musicChoice];
+    choosenMusic = musicChoice;
     showMusicChoiceValidationScreen(choosenMusic);
     delay(3000);
   }
 
   currentMenu = MAINMENU;
-
   irrecv.resume();
   return;
 }
@@ -538,7 +315,7 @@ void manageRestartConfirmAction()
 
 void manageAlarmClockMainScreen()
 {
-  showAlarmClockMainScreen(choosenMusic);
+  showAlarmClockMainScreen(choosenMusic, musicVolume);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
     if (irrecv.decode(&results))
@@ -561,13 +338,11 @@ void manageAlarmClockMainScreen()
 void setup()
 {
 
-  
-
   Serial.begin(115200);
   Serial2.begin(115200);
-  Serial.println(ESP.getFlashChipSize());
-  Serial.println(ESP.getChipModel());
-  Serial.println(ESP.getFlashChipMode());
+
+  // pinMode(Player_state, OUTPUT);
+
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
     delay(100);
@@ -580,22 +355,12 @@ void setup()
   showWelcomeScreen();
   delay(1000);
 
+  /*
+    if(!player.available()){
+      currentMenu = FATALERROR;
+    }
+  */
   tft.fillScreen(ILI9341_BLACK);
-
-  if (!SD_Initialize())
-  {
-    Serial.println("Card Mount Failed");
-    showCartMountFailed();
-    delay(1000);
-    currentMenu = FATALERROR;
-    return;
-  }
-  else
-  {
-    showCartMountSuccess();
-  }
-
-  delay(1000);
 
   WiFi.begin(ssid, password);
 
@@ -613,8 +378,9 @@ void setup()
 
   delay(1000);
 
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  softwareSerial.begin(9600);
+  player.begin(softwareSerial);
+  player.volume(musicVolume);
 }
 
 void loop()
@@ -625,7 +391,6 @@ void loop()
   if (currentMenu == FATALERROR)
   {
     showFatalErrorScreen();
-    // We need to stop the loop here
     while (true)
     {
     }
@@ -633,14 +398,8 @@ void loop()
 
   switch (currentMenu)
   {
-  case DOWNLOADMUSIC:
-    manageMusicDownloadMenu();
-    break;
   case MAINMENU:
     manageMainMenu();
-    break;
-  case FETCHMUSICFILENAME:
-    manageFetchMusicFileName();
     break;
   case CHOOSEMUSIC:
     manageChooseMusicMenu();

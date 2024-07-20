@@ -5,7 +5,6 @@ char *ssidToConnect = "WiFi-2.4-2D90";
 char *passwordToConnect = "wws7db5j9bu4k";
 
 const char *ssid = ssidToConnect;
-// const char* ssid     = "raspi-webgui";
 const char *password = passwordToConnect;
 
 #include <Arduino.h>
@@ -22,45 +21,29 @@ const char *password = passwordToConnect;
 #define TFT_CS 15
 #define TFT_RST 4
 #define TFT_DC 2
-#include <Fonts/FreeMonoBoldOblique12pt7b.h>
-#include <Fonts/FreeSerif9pt7b.h>
-// end of display pins
 
-// define the codes for the remote
+
 #include "RemoteTouch.h"
 
-// Define the menu index references
 #include "MenuIndexReferences.h"
 
-// Create an instance of the display
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, 23, 18, TFT_RST, -1);
-// The most appropriate pins for sck and mosi are 18 and 23 respectively. Or else, use 18 and 19
-//  end of display instance
 
-// Include the file that contains the display functions
+
 #include "DisplayFunctions.h"
-// It allows to have the functions in a separate file and make the main file cleaner
+#include "pictocode.h"
 
 // Define the pin for the mp3 player state
 int Player_state = 13;
 
-// Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
 #define DFPSerial Serial1
-// Create the Player object
 DFRobotDFPlayerMini player;
 
-// An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
-// board).
-// Note: GPIO 16 won't work on the ESP8266 as it does not have interrupts.
-// Note: GPIO 14 won't work on the ESP32-C3 as it causes the board to reboot.
-#ifdef ARDUINO_ESP32C3_DEV
-// const uint16_t kRecvPin = 10;  // 14 on a ESP32-C3 causes a boot loop.
-#else  // ARDUINO_ESP32C3_DEV
+
+
 const uint16_t kRecvPin = 16;
-#endif // ARDUINO_ESP32C3_DEV
 
 IRrecv irrecv(kRecvPin);
 
@@ -73,6 +56,51 @@ int currentMenu = ALARMCLOCKMAINSCREEN;
 int choosenMusic = 1;
 int musicVolume = 2;
 int folderCount = 0;
+
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+float temperature = 0;
+int pictocode = 0;
+
+const char* lat = "50.600004741970174";
+const char* lon = "3.625515300047851";
+const char* api_key = "wKNTjiRedyF1ZOc0";
+char api_endpoint[256];
+
+void getWeatherInformations(){
+    if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+
+    char api_endpoint[256];
+    sprintf(api_endpoint, "https://api.meteoblue.com/packages/current?lat=%s&lon=%s&apikey=%s", lat, lon, api_key);
+
+    http.begin(api_endpoint);
+    int httpCode = http.GET();
+
+    if (httpCode > 0) {
+      String payload = http.getString();
+      Serial.println(payload);
+
+      DynamicJsonDocument doc(2048);
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error) {
+        int pcode = doc["data_current"]["pictocode"];
+        float to = doc["data_current"]["temperature"];
+
+        pictocode = pcode;
+        temperature = to;
+      } else {
+        Serial.println("Error parsing JSON");
+      }
+    } else {
+      Serial.println("Error in HTTP request");
+    }
+
+    http.end();
+  }
+}
 
 
 
@@ -209,6 +237,7 @@ void manageMainMenu()
 
   updateMainMenu();
 
+
   while (currentMenu == MAINMENU)
   {
     bool menuSelected = waitForMenuSelection();
@@ -275,8 +304,7 @@ void manageChooseMusicMenu()
   return;
 }
 
-void manageRestartConfirmAction()
-{
+void manageRestartConfirmAction(){
   showRestartConfirmActionScreen();
   while (currentMenu == RESTARTCONFIRMACTION)
   {
@@ -302,9 +330,8 @@ void manageRestartConfirmAction()
   }
 }
 
-void manageAlarmClockMainScreen()
-{
-  showAlarmClockMainScreen(choosenMusic, musicVolume);
+void manageAlarmClockMainScreen(){
+  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
     if (irrecv.decode(&results))
@@ -328,10 +355,6 @@ void setup()
 {
 
   Serial.begin(115200);
-  // Serial2.begin(115200);
-
-  // pinMode(Player_state, OUTPUT);
-
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
     delay(100);
@@ -343,12 +366,6 @@ void setup()
   tft.setFont();
   showWelcomeScreen();
   delay(1000);
-
-  /*
-    if(!player.available()){
-      currentMenu = FATALERROR;
-    }
-  */
   tft.fillScreen(ILI9341_BLACK);
 
   WiFi.begin(ssid, password);
@@ -364,6 +381,10 @@ void setup()
   Serial.println(WiFi.localIP());
 
   showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+
+  getWeatherInformations();
+
+
 
   delay(1000);
 

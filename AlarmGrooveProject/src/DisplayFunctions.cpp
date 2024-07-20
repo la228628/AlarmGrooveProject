@@ -266,7 +266,7 @@ void showMusicChoiceValidationScreen(int music)
     tft.print("Track ");
     tft.print(music);
 }
-void showAlarmClockMainScreen(int choosenMusic, int musicVolume)
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperature, const char *weather, const char* lat, const char* lon)
 {
     resetDisplay();
     static const unsigned char PROGMEM image_music_play_button_bits[] = {0x07, 0xc0, 0x18, 0x30, 0x20, 0x08, 0x40, 0x04, 0x4c, 0x04, 0x8b, 0x82, 0x88, 0x62, 0x88, 0x1a, 0x88, 0x62, 0x8b, 0x82, 0x4c, 0x04, 0x40, 0x04, 0x20, 0x08, 0x18, 0x30, 0x07, 0xc0};
@@ -274,23 +274,23 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume)
     static const unsigned char PROGMEM image_volume_loud_bits[] = {0x01, 0xc1, 0x00, 0x02, 0x40, 0x80, 0x04, 0x44, 0x40, 0x08, 0x42, 0x20, 0xf0, 0x51, 0x20, 0x80, 0x49, 0x10, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x49, 0x10, 0xf0, 0x51, 0x20, 0x08, 0x42, 0x20, 0x04, 0x44, 0x40, 0x02, 0x40, 0x80, 0x01, 0xc1, 0x00, 0x00, 0x00, 0x00};
     static const unsigned char PROGMEM image_location_map_bits[] = {0x03, 0x80, 0x04, 0x40, 0x09, 0x20, 0x12, 0x90, 0x12, 0x90, 0x11, 0x10, 0x08, 0x20, 0x04, 0x40, 0x04, 0x40, 0x1a, 0xb0, 0x21, 0x08, 0x21, 0x08, 0x40, 0x04, 0x40, 0x04, 0x9c, 0x72, 0xe3, 0x8e};
     static const unsigned char PROGMEM image_clock_alarm_bits[] = {0x79, 0x3c, 0xb3, 0x9a, 0xed, 0x6e, 0xd0, 0x16, 0xa0, 0x0a, 0x41, 0x04, 0x41, 0x04, 0x81, 0x02, 0xc1, 0x06, 0x82, 0x02, 0x44, 0x04, 0x48, 0x04, 0x20, 0x08, 0x10, 0x10, 0x2d, 0x68, 0x43, 0x84};
-    tft.drawCircle(157, 117, 67, 0xFFFF);
+    tft.drawCircle(156, 127, 67, 0xFFFF);
     tft.setTextColor(0xFFFF);
     tft.setTextSize(3);
-    tft.setCursor(149, 103);
+    tft.setCursor(149, 111);
     tft.print(":");
-    tft.setCursor(175, 104);
+    tft.setCursor(106, 111);
     tft.print("00");
-    tft.setCursor(106, 104);
+    tft.setCursor(174, 111);
     tft.print("00");
     tft.drawBitmap(5, 196, image_music_play_button_bits, 15, 15, 0xFFFF);
     tft.setTextSize(1);
     tft.setCursor(28, 199);
     tft.print("TRACK");
-    tft.drawBitmap(245, 8, image_weather_temperature_bits, 16, 16, 0xFFFF);
+    tft.drawBitmap(206, 8, image_weather_temperature_bits, 16, 16, 0xFFFF);
     tft.setTextSize(2);
-    tft.setCursor(268, 10);
-    tft.print("to");
+    tft.setCursor(228, 10);
+    tft.print(temperature);
     tft.drawCircle(292, 6, 2, 0xFFFF);
     tft.setCursor(300, 10);
     tft.print("C");
@@ -300,31 +300,37 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume)
     tft.print(musicVolume);
     tft.setCursor(35, 14);
     tft.print("Lat: ");
+    tft.drawBitmap(10, 9, image_location_map_bits, 15, 16, 0xFFFF);
     tft.setCursor(35, 28);
     tft.print("Long: ");
-    tft.drawBitmap(10, 9, image_location_map_bits, 15, 16, 0xFFFF);
-    tft.setCursor(67, 28);
-    tft.print("0.0000 ");
     tft.setCursor(67, 14);
-    tft.print("0.0000 ");
+    tft.print(lat);
+    tft.setCursor(67, 28);
+    tft.print(lon);
     tft.setTextColor(0xFC00);
     tft.setCursor(145, 215);
     tft.print("PRESS PAUSE TO GO TO MENU");
     tft.setTextColor(0xFFFF);
     tft.setTextSize(2);
-    tft.setCursor(238, 100);
-    tft.print("GROOVE");
     tft.setCursor(10, 100);
     tft.print("ALARM");
+    tft.setTextColor(0xFFFF);
+    tft.setCursor(238, 100);
+    tft.print("GROOVE");
     tft.setTextSize(1);
     tft.setCursor(63, 199);
     tft.print(choosenMusic);
     tft.drawBitmap(220, 160, image_clock_alarm_bits, 15, 16, 0xFFFF);
     tft.setTextSize(2);
-    tft.setCursor(281, 161);
-    tft.print("30");
     tft.setCursor(244, 161);
     tft.print("07");
+    tft.setCursor(281, 161);
+    tft.print("30");
     tft.setCursor(268, 160);
     tft.print(":");
+    tft.setTextSize(1);
+    tft.setCursor(123, 31);
+    tft.print("");
+    tft.setCursor(35, 42);
+    tft.print(weather);
 }

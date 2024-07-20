@@ -262,7 +262,7 @@ void manageMainMenu()
       case MAINMENUSETVOLUME:
         currentMenu = SETVOUME;
         break;
-      case FETCHMUSICFILENAME:
+      case SERIALCOM:
         // currentMenu = FETCHMUSICFILENAME;
         break;
       case MAINMENUSETMUSICINDEX:
@@ -520,7 +520,6 @@ void setup()
 void loop()
 {
 
-  // put your main code here, to run repeatedly:
 
   if (currentMenu == FATALERROR)
   {

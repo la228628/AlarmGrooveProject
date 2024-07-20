@@ -1,7 +1,7 @@
 // DisplayFunctions.h
 
-#ifndef DISPLAYFUNCTIONS_H
-#define DISPLAYFUNCTIONS_H
+#ifndef DISPLAYFUNCTIONS_H 
+#define DISPLAYFUNCTIONS_H 
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>

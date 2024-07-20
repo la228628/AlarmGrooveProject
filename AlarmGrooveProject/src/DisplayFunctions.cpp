@@ -35,7 +35,7 @@ void unSelectAll()
 
     tft.fillRect(0, 160, 320, 40, ILI9341_BLACK);
     tft.setCursor(10, 170);
-    tft.println(FETCHMUSICFILENAMETEXT);
+    tft.println(SERIALCOMTEXT);
     tft.drawRect(0, 160, 320, 40, ILI9341_WHITE);
 }
 
@@ -72,12 +72,12 @@ void selectMenuIndex()
         tft.println(GETIPINFOTEXT);
         break;
 
-    case FETCHMUSICFILENAMEMENUINDEX:
+    case MAINSERIALCOMMENUINDEX:
         tft.fillRect(0, 160, 320, 40, ILI9341_BLUE);
         tft.setCursor(10, 170);
         tft.setTextColor(ILI9341_WHITE);
         tft.setTextSize(2);
-        tft.println(FETCHMUSICFILENAMETEXT);
+        tft.println(SERIALCOMTEXT);
         break;
     default:
         tft.println(mainMenuIndex);

@@ -1,5 +1,8 @@
 //Pictocode meteoblue and its corresponding weather icon
 
+#ifndef PICTOCODE_H
+#define PICTOCODE_H
+
 struct pictocode
 {
     int code;
@@ -39,3 +42,5 @@ const char *getPictocodeDescription(int code)
     return "Unknown";
 }
 
+
+#endif // PICTOCODE_H

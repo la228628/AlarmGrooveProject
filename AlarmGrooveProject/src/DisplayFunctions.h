@@ -27,8 +27,8 @@ void showRestartConfirmActionScreen();
 void showMusicOnSD(int musicName);
 void showMusicChoiceValidationScreen(int music);
 
-void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, const char* lat, const char* lon);
-
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, const char* lat, const char* lon, int hour, int minute);
+void modifyAlarmClockScreen(int hour, int minute);
 void resetDisplay();
 
 #endif // DISPLAYFUNCTIONS_H

@@ -266,7 +266,7 @@ void showMusicChoiceValidationScreen(int music)
     tft.print("Track ");
     tft.print(music);
 }
-void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperature, const char *weather, const char* lat, const char* lon)
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperature, const char *weather, const char *lat, const char *lon, int hour, int minute)
 {
     resetDisplay();
     static const unsigned char PROGMEM image_music_play_button_bits[] = {0x07, 0xc0, 0x18, 0x30, 0x20, 0x08, 0x40, 0x04, 0x4c, 0x04, 0x8b, 0x82, 0x88, 0x62, 0x88, 0x1a, 0x88, 0x62, 0x8b, 0x82, 0x4c, 0x04, 0x40, 0x04, 0x20, 0x08, 0x18, 0x30, 0x07, 0xc0};
@@ -280,9 +280,26 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     tft.setCursor(149, 111);
     tft.print(":");
     tft.setCursor(106, 111);
-    tft.print("00");
+    if (hour < 10)
+    {
+        tft.print("0");
+        tft.print(hour);
+    }
+    else
+    {
+
+        tft.print(hour);
+    }
     tft.setCursor(174, 111);
-    tft.print("00");
+    if(minute < 10)
+    {
+        tft.print("0");
+        tft.print(minute);
+    }
+    else
+    {
+        tft.print(minute);
+    }
     tft.drawBitmap(5, 196, image_music_play_button_bits, 15, 15, 0xFFFF);
     tft.setTextSize(1);
     tft.setCursor(28, 199);
@@ -333,4 +350,36 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     tft.print("");
     tft.setCursor(35, 42);
     tft.print(weather);
+}
+
+void modifyAlarmClockScreen(int hour, int minute){
+
+    tft.setTextSize(3);
+
+    tft.setCursor(106, 111);
+    //On enleve l'ancienne heure
+    tft.fillRect(106, 111, 40, 24, ILI9341_BLACK);
+    if (hour < 10)
+    {
+        tft.print("0");
+        tft.print(hour);
+    }
+    else
+    {
+
+        tft.print(hour);
+    }
+    tft.setCursor(174, 111);
+    //On enleve l'ancienne minute
+    tft.fillRect(174, 111, 40, 24, ILI9341_BLACK);
+    if(minute < 10)
+    {
+        tft.print("0");
+        tft.print(minute);
+    }
+    else
+    {
+        tft.print(minute);
+    }
+
 }

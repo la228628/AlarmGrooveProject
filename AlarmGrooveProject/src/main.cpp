@@ -17,18 +17,19 @@ const char *password = passwordToConnect;
 
 #include "DFRobotDFPlayerMini.h"
 
+#include "Wire.h"
+#include "RTClib.h"
+
 // Define the pins used for the display
 #define TFT_CS 15
 #define TFT_RST 4
 #define TFT_DC 2
-
 
 #include "RemoteTouch.h"
 
 #include "MenuIndexReferences.h"
 
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-
 
 #include "DisplayFunctions.h"
 #include "pictocode.h"
@@ -40,8 +41,6 @@ static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
 #define DFPSerial Serial1
 DFRobotDFPlayerMini player;
-
-
 
 const uint16_t kRecvPin = 16;
 
@@ -63,13 +62,20 @@ int folderCount = 0;
 float temperature = 0;
 int pictocode = 0;
 
-const char* lat = "50.600004741970174";
-const char* lon = "3.625515300047851";
-const char* api_key = "wKNTjiRedyF1ZOc0";
+const char *lat = "50.600004741970174";
+const char *lon = "3.625515300047851";
+const char *api_key = "wKNTjiRedyF1ZOc0";
 char api_endpoint[256];
 
-void getWeatherInformations(){
-    if (WiFi.status() == WL_CONNECTED) {
+RTC_DS3231 rtc;
+
+int hour = 0;
+int minute = 0;
+
+void getWeatherInformations()
+{
+  if (WiFi.status() == WL_CONNECTED)
+  {
     HTTPClient http;
 
     char api_endpoint[256];
@@ -78,31 +84,35 @@ void getWeatherInformations(){
     http.begin(api_endpoint);
     int httpCode = http.GET();
 
-    if (httpCode > 0) {
+    if (httpCode > 0)
+    {
       String payload = http.getString();
       Serial.println(payload);
 
       DynamicJsonDocument doc(2048);
       DeserializationError error = deserializeJson(doc, payload);
 
-      if (!error) {
+      if (!error)
+      {
         int pcode = doc["data_current"]["pictocode"];
         float to = doc["data_current"]["temperature"];
 
         pictocode = pcode;
         temperature = to;
-      } else {
+      }
+      else
+      {
         Serial.println("Error parsing JSON");
       }
-    } else {
+    }
+    else
+    {
       Serial.println("Error in HTTP request");
     }
 
     http.end();
   }
 }
-
-
 
 bool waitForMenuSelection()
 {
@@ -237,7 +247,6 @@ void manageMainMenu()
 
   updateMainMenu();
 
-
   while (currentMenu == MAINMENU)
   {
     bool menuSelected = waitForMenuSelection();
@@ -304,7 +313,8 @@ void manageChooseMusicMenu()
   return;
 }
 
-void manageRestartConfirmAction(){
+void manageRestartConfirmAction()
+{
   showRestartConfirmActionScreen();
   while (currentMenu == RESTARTCONFIRMACTION)
   {
@@ -330,10 +340,41 @@ void manageRestartConfirmAction(){
   }
 }
 
-void manageAlarmClockMainScreen(){
-  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon);
+
+void getCurrentTime()
+{
+  DateTime now = rtc.now();
+  int h = now.hour();
+  int m = now.minute();
+  hour = h;
+  minute = m;
+  Serial.print(h);
+  Serial.print(":");
+  Serial.println(m);
+  
+}
+void manageAlarmClockMainScreen()
+{
+
+  getCurrentTime();
+
+  
+
+
+
+  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon, hour, minute);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
+    int previousHour = hour;
+    int previousMinute = minute;
+    DateTime now = rtc.now();
+    if(now.minute() != previousMinute || now.hour() != previousHour)
+    {
+      getCurrentTime();
+      modifyAlarmClockScreen(hour, minute);
+
+    }
+
     if (irrecv.decode(&results))
     {
       Serial.println(results.value);
@@ -355,6 +396,20 @@ void setup()
 {
 
   Serial.begin(115200);
+  Wire.begin();
+  if (!rtc.begin())
+  {
+    Serial.println("Couldn't find RTC");
+    while (1)
+      ;
+  }
+
+    if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+    // Comment or adjust this line depending on how you want to set the time
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
     delay(100);
@@ -383,8 +438,6 @@ void setup()
   showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
 
   getWeatherInformations();
-
-
 
   delay(1000);
 

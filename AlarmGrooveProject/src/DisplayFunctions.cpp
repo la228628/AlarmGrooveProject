@@ -25,7 +25,7 @@ void unSelectAll()
 
     tft.fillRect(0, 80, 320, 40, ILI9341_BLACK);
     tft.setCursor(10, 90);
-    tft.println(DOWNLOADMUSICTEXT);
+    tft.println(SETVOLUMETEXT);
     tft.drawRect(0, 80, 320, 40, ILI9341_WHITE);
 
     tft.fillRect(0, 120, 320, 40, ILI9341_BLACK);
@@ -57,12 +57,12 @@ void selectMenuIndex()
         tft.setTextSize(2);
         tft.println(SETALARMTIMETEXT);
         break;
-    case MAINMENUDOWNLOADMUSICINDEX:
+    case MAINMENUSETVOLUME:
         tft.fillRect(0, 80, 320, 40, ILI9341_BLUE);
         tft.setCursor(10, 90);
         tft.setTextColor(ILI9341_WHITE);
         tft.setTextSize(2);
-        tft.println(DOWNLOADMUSICTEXT);
+        tft.println(SETVOLUMETEXT);
         break;
     case MAINMENUGETIPINFOSINDEX:
         tft.fillRect(0, 120, 320, 40, ILI9341_BLUE);
@@ -291,7 +291,7 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
         tft.print(hour);
     }
     tft.setCursor(174, 111);
-    if(minute < 10)
+    if (minute < 10)
     {
         tft.print("0");
         tft.print(minute);
@@ -351,13 +351,85 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     tft.setCursor(35, 42);
     tft.print(weather);
 }
+void showSetVolumeScreen(int vol)
+{
+    resetDisplay();
+    tft.drawRect(180, 194, 108, 36, 0xFFFF);
+    tft.drawRect(180, 158, 108, 36, 0xFFFF);
+    tft.drawRect(180, 14, 108, 36, 0xFFFF);
+    tft.drawRect(180, 122, 108, 36, 0xFFFF);
+    tft.drawRect(180, 86, 108, 36, 0xFFFF);
+    tft.drawRect(180, 50, 108, 36, 0xFFFF);
 
-void modifyAlarmClockScreen(int hour, int minute){
+    if (vol == 30)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 50, 108, 36, ILI9341_RED);
+        tft.fillRect(180, 14, 108, 36,ILI9341_RED);
+    }
+    else if (vol >= 25)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 50, 108, 36, ILI9341_RED);
+    }
+    else if (vol >= 20)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+    }
+
+    else if (vol >= 15)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+    }
+    else if (vol >= 10)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+
+    }
+
+    else if (vol >= 5)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+    }
+
+    tft.setTextColor(0xFFFF);
+    tft.setTextSize(2);
+    tft.setCursor(5, 12);
+    tft.print("SET THE VOLUME");
+    tft.setCursor(54, 46);
+    tft.print("WITH ");
+    tft.setCursor(22, 78);
+    tft.print("VOL+ & VOL-");
+    tft.setCursor(3, 142);
+    tft.print("VOLUME");
+    tft.setCursor(95, 141);
+    tft.print(vol);
+    tft.setTextColor(0xFC00);
+    tft.setTextSize(1);
+    tft.setCursor(20, 221);
+    tft.print("PRESS |<< TO CANCEL");
+    tft.setTextColor(0xFFE0);
+    tft.setCursor(17, 202);
+    tft.print("PRESS PAUSE TO CONFIRM");
+}
+void modifyAlarmClockScreen(int hour, int minute)
+{
 
     tft.setTextSize(3);
 
     tft.setCursor(106, 111);
-    //On enleve l'ancienne heure
     tft.fillRect(106, 111, 40, 24, ILI9341_BLACK);
     if (hour < 10)
     {
@@ -370,9 +442,8 @@ void modifyAlarmClockScreen(int hour, int minute){
         tft.print(hour);
     }
     tft.setCursor(174, 111);
-    //On enleve l'ancienne minute
     tft.fillRect(174, 111, 40, 24, ILI9341_BLACK);
-    if(minute < 10)
+    if (minute < 10)
     {
         tft.print("0");
         tft.print(minute);
@@ -381,5 +452,4 @@ void modifyAlarmClockScreen(int hour, int minute){
     {
         tft.print(minute);
     }
-
 }

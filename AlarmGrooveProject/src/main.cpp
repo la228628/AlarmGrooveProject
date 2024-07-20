@@ -259,8 +259,8 @@ void manageMainMenu()
         currentMenu = GETIPINFOS;
         break;
 
-      case MAINMENUDOWNLOADMUSICINDEX:
-        // currentMenu = DOWNLOADMUSIC;
+      case MAINMENUSETVOLUME:
+        currentMenu = SETVOUME;
         break;
       case FETCHMUSICFILENAME:
         // currentMenu = FETCHMUSICFILENAME;
@@ -391,7 +391,60 @@ void manageAlarmClockMainScreen()
     }
   }
 }
-
+void manageSetVolume()
+{
+  showSetVolumeScreen(musicVolume);
+  int volume = musicVolume;
+  while (currentMenu == SETVOUME)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        musicVolume = volume;
+        player.volume(musicVolume);
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == UP)
+      {
+        if (volume < 30)
+        {
+          volume++;
+          showSetVolumeScreen(volume);
+          irrecv.resume();
+        }else{
+          volume = 30;
+          irrecv.resume();
+        
+        }
+      }
+      else if (results.value == DOWN)
+      {
+        if (volume > 1)
+        {
+          volume--;
+          showSetVolumeScreen(volume);
+          irrecv.resume();
+        }else{
+          volume = 1;
+          irrecv.resume();
+        }
+      }else if (results.value == LEFT)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
+}
 void setup()
 {
 
@@ -493,6 +546,10 @@ void loop()
     break;
   case GETIPINFOS:
     manageGetIpInfos();
+    break;
+
+  case SETVOUME:
+  manageSetVolume();
     break;
   }
 }

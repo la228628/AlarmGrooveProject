@@ -18,6 +18,7 @@ void showWelcomeScreen();
 void showFatalErrorScreen();
 void showWifiConnectionWaitScreen();
 void showWifiConnectionSuccessScreen(const char* ip);
+void showSetVolumeScreen(int vol);
 
 
 

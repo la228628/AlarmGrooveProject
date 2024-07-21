@@ -65,7 +65,7 @@ int pictocode = 0;
 String lat = "50.600004741970174";
 String lon = "3.625515300047851";
 String api_key = "wKNTjiRedyF1ZOc0";
-String  api_endpoint;
+String api_endpoint;
 
 RTC_DS3231 rtc;
 
@@ -80,8 +80,10 @@ void getWeatherInformations()
   {
     HTTPClient http;
 
-    char api_endpoint[256];
-    sprintf(api_endpoint, "https://api.meteoblue.com/packages/current?lat=%s&lon=%s&apikey=%s", lat, lon, api_key);
+    
+    api_endpoint = "https://api.meteoblue.com/packages/current?lat=" + lat + "&lon=" + lon + "&apikey=" + api_key;
+
+    Serial.println(api_endpoint);
 
     http.begin(api_endpoint);
     int httpCode = http.GET();
@@ -534,11 +536,11 @@ void manageSetVolume()
 void manageSerialCom()
 {
 
-  String _ssid = "";
-  String _password = "";
-  String _lat = "";
-  String _lon = "";
-  String _api_key = "";
+  String _ssid = ssid;
+  String _password = password;
+  String _lat = lat;
+  String _lon = lon;
+  String _api_key = api_key;
 
   bool dataSend = false;
 
@@ -553,25 +555,28 @@ void manageSerialCom()
       {
         String receivedData = Serial.readStringUntil('\n'); // Lire jusqu'à la fin de ligne
 
-        if (receivedData.startsWith("SSID:"))
+        if (receivedData.startsWith("SSID:") && receivedData.equals("SSID:default") == false)
         {
           _ssid = receivedData.substring(5); // Extraire le SSID
         }
-        else if (receivedData.startsWith("PASSWORD:"))
+        else if (receivedData.startsWith("PASSWORD:") && receivedData.equals("PASSWORD:default") == false)
         {
           _password = receivedData.substring(9); // Extraire le mot de passe
         }
-        else if (receivedData.startsWith("LATITUDE:"))
+        else if (receivedData.startsWith("LATITUDE:") && receivedData.equals("LATITUDE:default") == false)
         {
           _lat = receivedData.substring(9); // Extraire la latitude
         }
-        else if (receivedData.startsWith("LONGITUDE:"))
+        else if (receivedData.startsWith("LONGITUDE:") && receivedData.equals("LONGITUDE:default") == false)
         {
           _lon = receivedData.substring(10); // Extraire la longitude
         }
         else if (receivedData.startsWith("APIKEY:"))
         {
-          _api_key = receivedData.substring(7); // Extraire la clé API
+          if (receivedData.equals("APIKEY:default") == false)
+          {
+            _api_key = receivedData.substring(7);
+          } 
           dataSend = true;
         }
       }
@@ -599,7 +604,6 @@ void manageSerialCom()
             strcpy(passwordChar, _password.c_str());
             password = passwordChar;
 
-          
             lat = _lat;
 
             lon = _lon;

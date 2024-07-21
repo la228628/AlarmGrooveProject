@@ -71,6 +71,8 @@ RTC_DS3231 rtc;
 
 int hour = 0;
 int minute = 0;
+int alarmHour = 0;
+int alarmMinute = 0;
 
 void getWeatherInformations()
 {
@@ -268,6 +270,9 @@ void manageMainMenu()
       case MAINMENUSETMUSICINDEX:
         currentMenu = CHOOSEMUSIC;
         break;
+      case MAINMENUSETALARMTIMEINDEX:
+        currentMenu = SETALARMTIME;
+        break;
       }
     }
     else
@@ -340,7 +345,90 @@ void manageRestartConfirmAction()
   }
 }
 
-
+void manageSetAlarmTime()
+{
+  int h = hour;
+  int m = minute;
+  showSetAlarmTimeScreen(h, m);
+  while (currentMenu == SETALARMTIME)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        alarmHour = h;
+        alarmMinute = m;
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == UP)
+      {
+        if (h < 23)
+        {
+          h++;
+        }
+        else
+        {
+          h = 0;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == DOWN)
+      {
+        if (h > 0)
+        {
+          h--;
+        }
+        else
+        {
+          h = 23;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == LEFT)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == VOLUP)
+      {
+        if (m < 59)
+        {
+          m++;
+        }
+        else
+        {
+          m = 0;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == VOLDOWN)
+      {
+        if (m > 0)
+        {
+          m--;
+        }
+        else
+        {
+          m = 59;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else
+      {
+        irrecv.resume();
+      }
+      
+    }
+  }
+}
 void getCurrentTime()
 {
   DateTime now = rtc.now();
@@ -351,28 +439,22 @@ void getCurrentTime()
   Serial.print(h);
   Serial.print(":");
   Serial.println(m);
-  
 }
 void manageAlarmClockMainScreen()
 {
 
   getCurrentTime();
 
-  
-
-
-
-  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon, hour, minute);
+  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon, hour, minute, alarmHour, alarmMinute);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
     int previousHour = hour;
     int previousMinute = minute;
     DateTime now = rtc.now();
-    if(now.minute() != previousMinute || now.hour() != previousHour)
+    if (now.minute() != previousMinute || now.hour() != previousHour)
     {
       getCurrentTime();
       modifyAlarmClockScreen(hour, minute);
-
     }
 
     if (irrecv.decode(&results))
@@ -415,10 +497,11 @@ void manageSetVolume()
           volume++;
           showSetVolumeScreen(volume);
           irrecv.resume();
-        }else{
+        }
+        else
+        {
           volume = 30;
           irrecv.resume();
-        
         }
       }
       else if (results.value == DOWN)
@@ -428,11 +511,14 @@ void manageSetVolume()
           volume--;
           showSetVolumeScreen(volume);
           irrecv.resume();
-        }else{
+        }
+        else
+        {
           volume = 1;
           irrecv.resume();
         }
-      }else if (results.value == LEFT)
+      }
+      else if (results.value == LEFT)
       {
         currentMenu = MAINMENU;
         irrecv.resume();
@@ -457,7 +543,8 @@ void setup()
       ;
   }
 
-    if (rtc.lostPower()) {
+  if (rtc.lostPower())
+  {
     Serial.println("RTC lost power, let's set the time!");
     // Comment or adjust this line depending on how you want to set the time
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -520,7 +607,6 @@ void setup()
 void loop()
 {
 
-
   if (currentMenu == FATALERROR)
   {
     showFatalErrorScreen();
@@ -548,7 +634,11 @@ void loop()
     break;
 
   case SETVOUME:
-  manageSetVolume();
+    manageSetVolume();
+    break;
+
+  case SETALARMTIME:
+    manageSetAlarmTime();
     break;
   }
 }

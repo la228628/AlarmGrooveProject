@@ -266,7 +266,7 @@ void showMusicChoiceValidationScreen(int music)
     tft.print("Track ");
     tft.print(music);
 }
-void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperature, const char *weather, const char *lat, const char *lon, int hour, int minute, int alarmH, int alarmM)
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperature, const char *weather, String lat, String lon, int hour, int minute, int alarmH, int alarmM)
 {
     resetDisplay();
     static const unsigned char PROGMEM image_music_play_button_bits[] = {0x07, 0xc0, 0x18, 0x30, 0x20, 0x08, 0x40, 0x04, 0x4c, 0x04, 0x8b, 0x82, 0x88, 0x62, 0x88, 0x1a, 0x88, 0x62, 0x8b, 0x82, 0x4c, 0x04, 0x40, 0x04, 0x20, 0x08, 0x18, 0x30, 0x07, 0xc0};
@@ -340,7 +340,7 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     tft.drawBitmap(220, 160, image_clock_alarm_bits, 15, 16, 0xFFFF);
     tft.setTextSize(2);
     tft.setCursor(244, 161);
-    if(alarmH < 10)
+    if (alarmH < 10)
     {
         tft.print("0");
         tft.print(alarmH);
@@ -350,7 +350,7 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
         tft.print(alarmH);
     }
     tft.setCursor(281, 161);
-    if(alarmM < 10)
+    if (alarmM < 10)
     {
         tft.print("0");
         tft.print(alarmM);
@@ -527,4 +527,57 @@ void showSetAlarmTimeScreen(int hour, int minute)
     {
         tft.print(minute);
     }
+}
+
+void showWaitForDataScreen()
+{
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Waiting for data from the server");
+    tft.setCursor(10, 50);
+    tft.println("Please enter the informations");
+    tft.setCursor(10, 90);
+    tft.println("on the application and press SEND");
+}
+
+void showConfirmInfosScreen(const char *ssid, const char *password, const char *latitude, const char *longitude, const char *apiKey)
+{
+    resetDisplay();
+    tft.drawRect(0, 160, 160, 80, 0xFFFF);
+    tft.setTextSize(1);
+    tft.setTextColor(0xFFFF);
+    tft.setCursor(62, 7);
+    tft.print("Are these informations correct ?");
+    tft.drawRect(160, 160, 160, 80, 0xFFFF);
+    tft.setCursor(9, 34);
+    tft.print("SSID :");
+    tft.setCursor(9, 90);
+    tft.print("LONG :");
+    tft.setCursor(9, 62);
+    tft.print("LAT :");
+    tft.setCursor(5, 127);
+    tft.print("API KEY :");
+    tft.setTextSize(2);
+    tft.setCursor(25, 170);
+    tft.print("PRESS |<<");
+    tft.setTextColor(0x540);
+    tft.setCursor(185, 203);
+    tft.print("TO CONFIRM");
+    tft.setTextColor(0xFAAA);
+    tft.setCursor(29, 204);
+    tft.print("TO RETRY");
+    tft.setTextColor(0xFFFF);
+    tft.setCursor(189, 169);
+    tft.print("PRESS >>|");
+    tft.setTextSize(1);
+    tft.setCursor(58, 62);
+    tft.print(latitude);
+    tft.setCursor(58, 34);
+    tft.print(ssid);
+    tft.setCursor(58, 89);
+    tft.print(longitude);
+    tft.setCursor(65, 127);
+    tft.print(apiKey);
 }

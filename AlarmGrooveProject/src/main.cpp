@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <Wifi.h>
 
-char *ssidToConnect = "WiFi-2.4-2D90";
-char *passwordToConnect = "wws7db5j9bu4k";
+char *ssid = "WiFi-2.4-2D90";
+char *password = "wws7db5j9bu4k";
 
-const char *ssid = ssidToConnect;
-const char *password = passwordToConnect;
+// const char *ssid = ssidToConnect;
+// const char *password = passwordToConnect;
 
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
@@ -62,10 +62,10 @@ int folderCount = 0;
 float temperature = 0;
 int pictocode = 0;
 
-const char *lat = "50.600004741970174";
-const char *lon = "3.625515300047851";
-const char *api_key = "wKNTjiRedyF1ZOc0";
-char api_endpoint[256];
+String lat = "50.600004741970174";
+String lon = "3.625515300047851";
+String api_key = "wKNTjiRedyF1ZOc0";
+String  api_endpoint;
 
 RTC_DS3231 rtc;
 
@@ -264,8 +264,8 @@ void manageMainMenu()
       case MAINMENUSETVOLUME:
         currentMenu = SETVOUME;
         break;
-      case SERIALCOM:
-        // currentMenu = FETCHMUSICFILENAME;
+      case MAINSERIALCOMMENUINDEX:
+        currentMenu = SERIALCOM;
         break;
       case MAINMENUSETMUSICINDEX:
         currentMenu = CHOOSEMUSIC;
@@ -425,7 +425,6 @@ void manageSetAlarmTime()
       {
         irrecv.resume();
       }
-      
     }
   }
 }
@@ -531,6 +530,94 @@ void manageSetVolume()
     }
   }
 }
+
+void manageSerialCom()
+{
+
+  String _ssid = "";
+  String _password = "";
+  String _lat = "";
+  String _lon = "";
+  String _api_key = "";
+
+  bool dataSend = false;
+
+  showWaitForDataScreen();
+
+  while (currentMenu == SERIALCOM)
+  {
+    if (dataSend == false)
+    {
+
+      if (Serial.available() > 0)
+      {
+        String receivedData = Serial.readStringUntil('\n'); // Lire jusqu'à la fin de ligne
+
+        if (receivedData.startsWith("SSID:"))
+        {
+          _ssid = receivedData.substring(5); // Extraire le SSID
+        }
+        else if (receivedData.startsWith("PASSWORD:"))
+        {
+          _password = receivedData.substring(9); // Extraire le mot de passe
+        }
+        else if (receivedData.startsWith("LATITUDE:"))
+        {
+          _lat = receivedData.substring(9); // Extraire la latitude
+        }
+        else if (receivedData.startsWith("LONGITUDE:"))
+        {
+          _lon = receivedData.substring(10); // Extraire la longitude
+        }
+        else if (receivedData.startsWith("APIKEY:"))
+        {
+          _api_key = receivedData.substring(7); // Extraire la clé API
+          dataSend = true;
+        }
+      }
+    }
+    else
+    {
+      showConfirmInfosScreen(_ssid.c_str(), _password.c_str(), _lat.c_str(), _lon.c_str(), _api_key.c_str());
+      while (dataSend == true)
+      {
+        if (irrecv.decode(&results))
+        {
+          if (results.value == LEFT)
+          {
+            irrecv.resume();
+            return;
+          }
+          else if (results.value == RIGHT)
+          {
+            currentMenu = MAINMENU;
+            char ssidChar[_ssid.length() + 1];
+            strcpy(ssidChar, _ssid.c_str());
+            ssid = ssidChar;
+
+            char passwordChar[_password.length() + 1];
+            strcpy(passwordChar, _password.c_str());
+            password = passwordChar;
+
+          
+            lat = _lat;
+
+            lon = _lon;
+
+            api_key = _api_key;
+            irrecv.resume();
+            return;
+          }
+          else
+          {
+            irrecv.resume();
+          }
+        }
+      }
+    }
+  }
+}
+
 void setup()
 {
 
@@ -639,6 +726,10 @@ void loop()
 
   case SETALARMTIME:
     manageSetAlarmTime();
+    break;
+
+  case SERIALCOM:
+    manageSerialCom();
     break;
   }
 }

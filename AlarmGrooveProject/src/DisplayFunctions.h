@@ -28,10 +28,13 @@ void showRestartConfirmActionScreen();
 void showMusicOnSD(int musicName);
 void showMusicChoiceValidationScreen(int music);
 
-void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, const char* lat, const char* lon, int hour, int minute, int alarmH, int alarmM);
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, String lat, String lon, int hour, int minute, int alarmH, int alarmM);
 void modifyAlarmClockScreen(int hour, int minute);
 
 void showSetAlarmTimeScreen(int hour, int minute);
+
+void showWaitForDataScreen();
+void showConfirmInfosScreen(const char* ssid, const char* password, const char* latitude, const char* longitude, const char* apiKey);
 void resetDisplay();
 
 #endif // DISPLAYFUNCTIONS_H

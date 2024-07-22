@@ -439,7 +439,7 @@ void showSetVolumeScreen(int vol)
     tft.setCursor(17, 202);
     tft.print("PRESS PAUSE TO CONFIRM");
 }
-void modifyAlarmClockScreen(int hour, int minute)
+void modifyAlarmClockScreen(int hour, int minute , float temperature, const char *weather)
 {
 
     tft.setTextSize(3);
@@ -456,6 +456,7 @@ void modifyAlarmClockScreen(int hour, int minute)
 
         tft.print(hour);
     }
+    
     tft.setCursor(174, 111);
     tft.fillRect(174, 111, 40, 24, ILI9341_BLACK);
     if (minute < 10)
@@ -467,6 +468,15 @@ void modifyAlarmClockScreen(int hour, int minute)
     {
         tft.print(minute);
     }
+    tft.fillRect(224, 6, 65, 24, ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setCursor(228, 10);
+    tft.print(temperature);
+
+    tft.fillRect(32, 41, 286, 11, ILI9341_BLACK);
+    tft.setTextSize(1);
+    tft.setCursor(35, 42);
+    tft.print(weather);
 }
 
 void showSetAlarmTimeScreen(int hour, int minute)

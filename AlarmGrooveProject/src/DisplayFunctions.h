@@ -29,7 +29,7 @@ void showMusicOnSD(int musicName);
 void showMusicChoiceValidationScreen(int music);
 
 void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, String lat, String lon, int hour, int minute, int alarmH, int alarmM);
-void modifyAlarmClockScreen(int hour, int minute);
+void modifyAlarmClockScreen(int hour, int minute, float temperature, const char *weather);
 
 void showSetAlarmTimeScreen(int hour, int minute);
 

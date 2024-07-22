@@ -123,6 +123,7 @@ int hour = 0;
 int minute = 0;
 int alarmHour = 0;
 int alarmMinute = 0;
+bool alreadyTriggered = false;
 
 void getWeatherInformations()
 {
@@ -493,6 +494,8 @@ void getCurrentTime()
 void manageAlarmClockMainScreen()
 {
 
+  irrecv.resume();
+
   getCurrentTime();
 
   showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon, hour, minute, alarmHour, alarmMinute);
@@ -501,10 +504,48 @@ void manageAlarmClockMainScreen()
     int previousHour = hour;
     int previousMinute = minute;
     DateTime now = rtc.now();
+    
+    if(now.hour() != previousHour){
+      getWeatherInformations();
+    }
+
     if (now.minute() != previousMinute || now.hour() != previousHour)
     {
       getCurrentTime();
-      modifyAlarmClockScreen(hour, minute);
+      modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
+      alreadyTriggered = false;
+
+
+      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered ==false )
+      {
+
+        player.loop(choosenMusic);
+        while (true)
+        {
+          previousHour = hour;
+          previousMinute = minute;
+          DateTime now = rtc.now();
+          if (now.hour() != previousHour || now.minute() != previousMinute)
+          {
+            getCurrentTime();
+            modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
+          }
+          if (irrecv.decode(&results))
+          {
+            if (results.value == PAUSE)
+            {
+              player.stop();
+              alreadyTriggered = true;
+              irrecv.resume();
+              break;
+            }
+            else
+            {
+              irrecv.resume();
+            }
+          }
+        }
+      }
     }
 
     if (irrecv.decode(&results))
@@ -692,15 +733,15 @@ void manageEmergency()
     {
         bool buttonDetected = false;
         showRemoteWaitingScreen(action.prompt);
-
-        // Attente de la détection du bouton
         while (!buttonDetected)
         {
             if (irrecv.decode(&results))
             {
                 action.setButtonFunc(results.value);
+                delay(500);
                 irrecv.resume();
                 buttonDetected = true; 
+                
             }
         }
 
@@ -763,6 +804,7 @@ void setup()
   {
     manageEmergency();
   }
+  irrecv.resume();
 
   showWelcomeScreen();
   delay(1000);
@@ -781,10 +823,11 @@ void setup()
   Serial.println(WiFi.localIP());
 
   showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
-
   getWeatherInformations();
 
+
   delay(1000);
+
 
   DFPSerial.begin(9600, SERIAL_8N1, /*rx =*/26, /*tx =*/27);
 

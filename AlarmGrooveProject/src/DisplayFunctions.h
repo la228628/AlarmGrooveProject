@@ -41,4 +41,6 @@ void showEmergencyWaitScreen();
 
 void showRemoteWaitingScreen( const char *text);
 
+void showWifiConnectionFailedScreen();
+
 #endif // DISPLAYFUNCTIONS_H

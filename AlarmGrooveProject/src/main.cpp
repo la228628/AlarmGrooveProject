@@ -1,10 +1,17 @@
 #include <stdio.h>
 #include <Wifi.h>
 
+#include <Preferences.h>
+
+Preferences preferences;
+
 const int emergencyPin = 14;
 
-char *ssid = "WiFi-2.4-2D90";
-char *password = "wws7db5j9bu4k";
+
+
+String ssid = "defaultSSID";
+String password = "defaultPassword";
+bool connectionFailed = false;
 
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
@@ -37,45 +44,59 @@ uint64_t DOWN = 0xFFE01F;
 uint64_t UP = 0xFF906F;
 uint64_t ONE = 0xFF30CF;
 
-
-void setUpButton(uint64_t ircode){
-    UP = ircode;
+void setUpButton(uint64_t ircode)
+{
+  UP = ircode;
+  preferences.putULong("remoteUp", UP);
 }
 
-void setDownButton(uint64_t ircode){
-    DOWN = ircode;
+void setDownButton(uint64_t ircode)
+{
+  DOWN = ircode;
+  preferences.putULong("remoteDown", DOWN);
 }
 
-void setLeftButton(uint64_t ircode){
-    LEFT = ircode;
+void setLeftButton(uint64_t ircode)
+{
+  LEFT = ircode;
+  preferences.putULong("remoteLeft", LEFT);
 }
 
-void setRightButton(uint64_t ircode){
-    RIGHT = ircode;
+void setRightButton(uint64_t ircode)
+{
+  RIGHT = ircode;
+  preferences.putULong("remoteRight", RIGHT);
 }
 
-void setSelectButton(uint64_t ircode){
-    PAUSE = ircode;
+void setSelectButton(uint64_t ircode)
+{
+  PAUSE = ircode;
+  preferences.putULong("remotePause", PAUSE);
 }
 
-void setPowerButton(uint64_t ircode){
-    POWER = ircode;
+void setPowerButton(uint64_t ircode)
+{
+  POWER = ircode;
+  preferences.putULong("remotePower", POWER);
 }
 
-void setVolumeUpButton(uint64_t ircode){
-    VOLUP = ircode;
+void setVolumeUpButton(uint64_t ircode)
+{
+  VOLUP = ircode;
+  preferences.putULong("remoteVolUp", VOLUP);
 }
 
-void setVolumeDownButton(uint64_t ircode){
-    VOLDOWN = ircode;
+void setVolumeDownButton(uint64_t ircode)
+{
+  VOLDOWN = ircode;
+  preferences.putULong("remoteVolDown", VOLDOWN);
 }
 
-void setOneButton(uint64_t ircode){
-    ONE = ircode;
+void setOneButton(uint64_t ircode)
+{
+  ONE = ircode;
+  preferences.putULong("remoteOne", ONE);
 }
-
-
-
 
 #include "MenuIndexReferences.h"
 
@@ -335,7 +356,7 @@ void manageMainMenu()
 }
 void manageGetIpInfos()
 {
-  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), WiFi.SSID().c_str());
+  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), ssid.c_str());
   while (results.value != LEFT)
   {
     if (irrecv.decode(&results))
@@ -361,6 +382,7 @@ void manageChooseMusicMenu()
   if (musicChoice != -1)
   {
     choosenMusic = musicChoice;
+    preferences.putUInt("choosenMusic", choosenMusic);
     showMusicChoiceValidationScreen(choosenMusic);
     delay(3000);
   }
@@ -410,7 +432,9 @@ void manageSetAlarmTime()
       if (results.value == PAUSE)
       {
         alarmHour = h;
+        preferences.putUInt("alarmHour", alarmHour);
         alarmMinute = m;
+        preferences.putUInt("alarmMinute", alarmMinute);
         currentMenu = MAINMENU;
         irrecv.resume();
         return;
@@ -504,8 +528,9 @@ void manageAlarmClockMainScreen()
     int previousHour = hour;
     int previousMinute = minute;
     DateTime now = rtc.now();
-    
-    if(now.hour() != previousHour){
+
+    if (now.hour() != previousHour)
+    {
       getWeatherInformations();
     }
 
@@ -515,8 +540,7 @@ void manageAlarmClockMainScreen()
       modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
       alreadyTriggered = false;
 
-
-      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered ==false )
+      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered == false)
       {
 
         player.loop(choosenMusic);
@@ -576,6 +600,7 @@ void manageSetVolume()
       if (results.value == PAUSE)
       {
         musicVolume = volume;
+        preferences.putUInt("musicVolume", musicVolume);
         player.volume(musicVolume);
         currentMenu = MAINMENU;
         irrecv.resume();
@@ -643,23 +668,24 @@ void manageSerialCom()
 
       if (Serial.available() > 0)
       {
-        String receivedData = Serial.readStringUntil('\n'); // Lire jusqu'à la fin de ligne
+        String receivedData = Serial.readStringUntil('\n'); 
 
         if (receivedData.startsWith("SSID:") && receivedData.equals("SSID:default") == false)
         {
-          _ssid = receivedData.substring(5); // Extraire le SSID
+          _ssid = receivedData.substring(5); 
+          
         }
         else if (receivedData.startsWith("PASSWORD:") && receivedData.equals("PASSWORD:default") == false)
         {
-          _password = receivedData.substring(9); // Extraire le mot de passe
+          _password = receivedData.substring(9);
         }
         else if (receivedData.startsWith("LATITUDE:") && receivedData.equals("LATITUDE:default") == false)
         {
-          _lat = receivedData.substring(9); // Extraire la latitude
+          _lat = receivedData.substring(9); 
         }
         else if (receivedData.startsWith("LONGITUDE:") && receivedData.equals("LONGITUDE:default") == false)
         {
-          _lon = receivedData.substring(10); // Extraire la longitude
+          _lon = receivedData.substring(10); 
         }
         else if (receivedData.startsWith("APIKEY:"))
         {
@@ -686,21 +712,17 @@ void manageSerialCom()
           else if (results.value == RIGHT)
           {
             currentMenu = MAINMENU;
-            char ssidChar[_ssid.length() + 1];
-            strcpy(ssidChar, _ssid.c_str());
-            ssid = ssidChar;
+            preferences.putString("ssid", _ssid);
 
-            char passwordChar[_password.length() + 1];
-            strcpy(passwordChar, _password.c_str());
-            password = passwordChar;
+            preferences.putString("password", _password);
 
-            lat = _lat;
+            preferences.putString("lat", _lat);
 
-            lon = _lon;
+            preferences.putString("lon", _lon);
 
-            api_key = _api_key;
+            preferences.putString("api_key", _api_key);
             irrecv.resume();
-            return;
+            ESP.restart();
           }
           else
           {
@@ -714,48 +736,128 @@ void manageSerialCom()
 
 void manageEmergency()
 {
-    struct ButtonAction {
-        const char* prompt;
-        void (*setButtonFunc)(uint64_t);
-    } buttonActions[] = {
-        {"Press PAUSE Button", setSelectButton},
-        {"Press UP Button", setUpButton},
-        {"Press DOWN Button", setDownButton},
-        {"Press LEFT Button", setLeftButton},
-        {"Press RIGHT Button", setRightButton},
-        {"Press POWER Button", setPowerButton},
-        {"Press VOLUP Button", setVolumeUpButton},
-        {"Press VOLDOWN Button", setVolumeDownButton},
-        {"Press ONE Button", setOneButton}
-    };
+  struct ButtonAction
+  {
+    const char *prompt;
+    void (*setButtonFunc)(uint64_t);
+  } buttonActions[] = {
+      {"Press PAUSE Button", setSelectButton},
+      {"Press UP Button", setUpButton},
+      {"Press DOWN Button", setDownButton},
+      {"Press LEFT Button", setLeftButton},
+      {"Press RIGHT Button", setRightButton},
+      {"Press POWER Button", setPowerButton},
+      {"Press VOLUP Button", setVolumeUpButton},
+      {"Press VOLDOWN Button", setVolumeDownButton},
+      {"Press ONE Button", setOneButton}};
 
-    for (auto& action : buttonActions)
+  for (auto &action : buttonActions)
+  {
+    bool buttonDetected = false;
+    showRemoteWaitingScreen(action.prompt);
+    while (!buttonDetected)
     {
-        bool buttonDetected = false;
-        showRemoteWaitingScreen(action.prompt);
-        while (!buttonDetected)
-        {
-            if (irrecv.decode(&results))
-            {
-                action.setButtonFunc(results.value);
-                delay(500);
-                irrecv.resume();
-                buttonDetected = true; 
-                
-            }
-        }
-
+      if (irrecv.decode(&results))
+      {
+        action.setButtonFunc(results.value);
+        delay(500);
+        irrecv.resume();
+        buttonDetected = true;
+      }
     }
-
-
-
+  }
+  
 }
-
 
 void setup()
 {
 
   Serial.begin(115200);
+
+  preferences.begin("alarmclock", false);
+
+  if (preferences.isKey("ssid"))
+  {
+    String ssidString = preferences.getString("ssid", "");
+    if (ssidString != "")
+    {
+      ssid = ssidString;
+    }
+  }
+
+  if (preferences.isKey("password"))
+  {
+    String passwordString = preferences.getString("password", "");
+    if (passwordString != "")
+    {
+      password = passwordString;
+    }
+  }
+
+  if (preferences.isKey("musicVolume"))
+  {
+    musicVolume = preferences.getUInt("musicVolume");
+  }
+  if (preferences.isKey("choosenMusic"))
+  {
+    choosenMusic = preferences.getUInt("choosenMusic");
+  }
+  if (preferences.isKey("alarmHour"))
+  {
+    alarmHour = preferences.getUInt("alarmHour");
+  }
+  if (preferences.isKey("alarmMinute"))
+  {
+    alarmMinute = preferences.getUInt("alarmMinute");
+  }
+  if (preferences.isKey("lat"))
+  {
+    lat = preferences.getString("lat");
+  }
+  if (preferences.isKey("lon"))
+  {
+    lon = preferences.getString("lon");
+  }
+  if (preferences.isKey("api_key"))
+  {
+    api_key = preferences.getString("api_key");
+  }
+  if (preferences.isKey("remoteUp"))
+  {
+    setUpButton(preferences.getULong("remoteUp"));
+  }
+  if (preferences.isKey("remoteDown"))
+  {
+    setDownButton(preferences.getULong("remoteDown"));
+  }
+  if (preferences.isKey("remoteLeft"))
+  {
+    setLeftButton(preferences.getULong("remoteLeft"));
+  }
+  if (preferences.isKey("remoteRight"))
+  {
+    setRightButton(preferences.getULong("remoteRight"));
+  }
+  if (preferences.isKey("remotePause"))
+  {
+    setSelectButton(preferences.getULong("remotePause"));
+  }
+  if (preferences.isKey("remotePower"))
+  {
+    setPowerButton(preferences.getULong("remotePower"));
+  }
+  if (preferences.isKey("remoteVolUp"))
+  {
+    setVolumeUpButton(preferences.getULong("remoteVolUp"));
+  }
+  if (preferences.isKey("remoteVolDown"))
+  {
+    setVolumeDownButton(preferences.getULong("remoteVolDown"));
+  }
+  if (preferences.isKey("remoteOne"))
+  {
+    setOneButton(preferences.getULong("remoteOne"));
+  }
 
   Wire.begin();
   if (!rtc.begin())
@@ -809,12 +911,34 @@ void setup()
   showWelcomeScreen();
   delay(1000);
   tft.fillScreen(ILI9341_BLACK);
+  Serial.println("SSID:");
+  Serial.println(ssid);
+  Serial.println("PASSWORD:");
+  Serial.println(password);
 
   WiFi.begin(ssid, password);
 
   showWifiConnectionWaitScreen();
-  while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED && connectionFailed == false)
   {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.print(WiFi.status());
+
+    if(irrecv.decode(&results))
+    {
+      if(results.value == PAUSE)
+      {
+        connectionFailed = true;
+      }
+      irrecv.resume();
+    }
+    
+    if (WiFi.status() == WL_NO_SSID_AVAIL || WiFi.status() == WL_CONNECT_FAILED )
+    {
+      Serial.println("Connection failed");
+      Serial.println(WiFi.status());  
+      connectionFailed = true;
+    }
   }
 
   Serial.println("");
@@ -822,12 +946,17 @@ void setup()
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
-  getWeatherInformations();
+  if (connectionFailed == false)
+  {
 
-
+    showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+    getWeatherInformations();
+  }
+  else
+  {
+    showWifiConnectionFailedScreen();
+  }
   delay(1000);
-
 
   DFPSerial.begin(9600, SERIAL_8N1, /*rx =*/26, /*tx =*/27);
 

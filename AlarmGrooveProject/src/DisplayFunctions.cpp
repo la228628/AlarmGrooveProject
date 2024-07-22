@@ -183,6 +183,12 @@ void showWifiConnectionWaitScreen()
     tft.println("Connecting to WiFi");
     tft.setCursor(10, 30);
     tft.println("Please wait...");
+    tft.setCursor(10, 50);
+    tft.println("This may take a while");
+    tft.setCursor(10, 70);
+    tft.println("If it takes too long, please");
+    tft.setCursor(10, 90);
+    tft.println("Press PAUSE to skip the process");
 }
 
 void showWifiConnectionSuccessScreen(const char *ip)
@@ -621,4 +627,17 @@ void showRemoteWaitingScreen( const char *text)
     tft.println("Please press the button");
     tft.setCursor(10, 70);
     tft.println(text);
+}
+
+void showWifiConnectionFailedScreen()
+{
+    tft.fillScreen(ILI9341_RED);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Failed to connect to WiFi");
+    tft.setCursor(10, 50);
+    tft.println("Please check the credentials");
+    tft.setCursor(10, 90);
+    tft.println("and restart the device.");
 }

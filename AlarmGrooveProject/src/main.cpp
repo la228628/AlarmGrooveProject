@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <Wifi.h>
 
+const int emergencyPin = 14;
+
 char *ssid = "WiFi-2.4-2D90";
 char *password = "wws7db5j9bu4k";
-
-// const char *ssid = ssidToConnect;
-// const char *password = passwordToConnect;
 
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
@@ -26,6 +25,57 @@ char *password = "wws7db5j9bu4k";
 #define TFT_DC 2
 
 #include "RemoteTouch.h"
+
+// Define the IR codes for the remote control
+uint64_t POWER = 0xFFA25D;
+uint64_t VOLUP = 0xFF629D;
+uint64_t VOLDOWN = 0xFFA857;
+uint64_t LEFT = 0xFF22DD;
+uint64_t RIGHT = 0xFFC23D;
+uint64_t PAUSE = 0xFF02FD;
+uint64_t DOWN = 0xFFE01F;
+uint64_t UP = 0xFF906F;
+uint64_t ONE = 0xFF30CF;
+
+
+void setUpButton(uint64_t ircode){
+    UP = ircode;
+}
+
+void setDownButton(uint64_t ircode){
+    DOWN = ircode;
+}
+
+void setLeftButton(uint64_t ircode){
+    LEFT = ircode;
+}
+
+void setRightButton(uint64_t ircode){
+    RIGHT = ircode;
+}
+
+void setSelectButton(uint64_t ircode){
+    PAUSE = ircode;
+}
+
+void setPowerButton(uint64_t ircode){
+    POWER = ircode;
+}
+
+void setVolumeUpButton(uint64_t ircode){
+    VOLUP = ircode;
+}
+
+void setVolumeDownButton(uint64_t ircode){
+    VOLDOWN = ircode;
+}
+
+void setOneButton(uint64_t ircode){
+    ONE = ircode;
+}
+
+
+
 
 #include "MenuIndexReferences.h"
 
@@ -80,7 +130,6 @@ void getWeatherInformations()
   {
     HTTPClient http;
 
-    
     api_endpoint = "https://api.meteoblue.com/packages/current?lat=" + lat + "&lon=" + lon + "&apikey=" + api_key;
 
     Serial.println(api_endpoint);
@@ -576,7 +625,7 @@ void manageSerialCom()
           if (receivedData.equals("APIKEY:default") == false)
           {
             _api_key = receivedData.substring(7);
-          } 
+          }
           dataSend = true;
         }
       }
@@ -622,10 +671,51 @@ void manageSerialCom()
   }
 }
 
+void manageEmergency()
+{
+    struct ButtonAction {
+        const char* prompt;
+        void (*setButtonFunc)(uint64_t);
+    } buttonActions[] = {
+        {"Press PAUSE Button", setSelectButton},
+        {"Press UP Button", setUpButton},
+        {"Press DOWN Button", setDownButton},
+        {"Press LEFT Button", setLeftButton},
+        {"Press RIGHT Button", setRightButton},
+        {"Press POWER Button", setPowerButton},
+        {"Press VOLUP Button", setVolumeUpButton},
+        {"Press VOLDOWN Button", setVolumeDownButton},
+        {"Press ONE Button", setOneButton}
+    };
+
+    for (auto& action : buttonActions)
+    {
+        bool buttonDetected = false;
+        showRemoteWaitingScreen(action.prompt);
+
+        // Attente de la détection du bouton
+        while (!buttonDetected)
+        {
+            if (irrecv.decode(&results))
+            {
+                action.setButtonFunc(results.value);
+                irrecv.resume();
+                buttonDetected = true; 
+            }
+        }
+
+    }
+
+
+
+}
+
+
 void setup()
 {
 
   Serial.begin(115200);
+
   Wire.begin();
   if (!rtc.begin())
   {
@@ -650,6 +740,30 @@ void setup()
 
   tft.begin();
   tft.setFont();
+  tft.setRotation(3);
+
+  pinMode(emergencyPin, INPUT_PULLUP);
+  int time = 0;
+  bool emergency = false;
+  showEmergencyWaitScreen();
+
+  // Check if the emergency button is pressed in the first 5 seconds
+  while (time < 5000)
+  {
+    if (digitalRead(emergencyPin) == LOW)
+    {
+      emergency = true;
+      break;
+    }
+    time += 100;
+    delay(100);
+  }
+
+  if (emergency)
+  {
+    manageEmergency();
+  }
+
   showWelcomeScreen();
   delay(1000);
   tft.fillScreen(ILI9341_BLACK);

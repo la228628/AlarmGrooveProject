@@ -37,4 +37,8 @@ void showWaitForDataScreen();
 void showConfirmInfosScreen(const char* ssid, const char* password, const char* latitude, const char* longitude, const char* apiKey);
 void resetDisplay();
 
+void showEmergencyWaitScreen();
+
+void showRemoteWaitingScreen( const char *text);
+
 #endif // DISPLAYFUNCTIONS_H

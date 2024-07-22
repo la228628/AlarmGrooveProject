@@ -581,3 +581,34 @@ void showConfirmInfosScreen(const char *ssid, const char *password, const char *
     tft.setCursor(65, 127);
     tft.print(apiKey);
 }
+
+void showEmergencyWaitScreen()
+{
+
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(1);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("IF YOUR REMOTE IS NOT WORKING");
+    tft.setCursor(10, 50);
+    tft.println("PRESS THE BUTTON ON THE DEVICE");
+    tft.setCursor(10, 90);
+    tft.println("TO SET THE BUTTON");
+    tft.setCursor(10, 130);
+    tft.println("ELSE PLEASE WAIT");
+}
+
+void showRemoteWaitingScreen( const char *text)
+{
+    tft.fillScreen(ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("Remote IR is waiting");
+    tft.setCursor(10, 30);
+    tft.println("to set button");
+    tft.setCursor(10, 50);
+    tft.println("Please press the button");
+    tft.setCursor(10, 70);
+    tft.println(text);
+}

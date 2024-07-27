@@ -1,4 +1,3 @@
-// This file contains the IR codes for the remote control of the ILI9341 touch screen display
 // The IR codes are used to control the display with a remote control
 #ifndef REMOTETOUCH_H
 #define REMOTETOUCH_H

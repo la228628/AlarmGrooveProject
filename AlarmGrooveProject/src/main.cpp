@@ -152,7 +152,7 @@ void getWeatherInformations()
   {
     HTTPClient http;
 
-    api_endpoint = "https://api.meteoblue.com/packages/current?lat=" + lat + "&lon=" + lon + "&apikey=" + api_key;
+    api_endpoint = "https://my.meteoblue.com/packages/current?lat=" + lat + "&lon=" + lon + "&apikey=" + api_key;
 
     Serial.println(api_endpoint);
 

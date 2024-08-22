@@ -186,7 +186,7 @@ void showWifiConnectionWaitScreen()
     tft.setCursor(10, 50);
     tft.println("This may take a while");
     tft.setCursor(10, 70);
-    tft.println("If it takes too long, please");
+    tft.println("If it takes too long");
     tft.setCursor(10, 90);
     tft.println("Press PAUSE to skip the process");
 }
@@ -551,7 +551,7 @@ void showWaitForDataScreen()
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);
     tft.setCursor(10, 10);
-    tft.println("Waiting for data from the server");
+    tft.println("Waiting for data from the app");
     tft.setCursor(10, 50);
     tft.println("Please enter the informations");
     tft.setCursor(10, 90);

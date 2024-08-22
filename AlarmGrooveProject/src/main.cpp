@@ -755,6 +755,7 @@ void manageEmergency()
   {
     bool buttonDetected = false;
     showRemoteWaitingScreen(action.prompt);
+    irrecv.resume();
     while (!buttonDetected)
     {
       if (irrecv.decode(&results))

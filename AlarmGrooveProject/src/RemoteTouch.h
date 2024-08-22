@@ -1,21 +1,27 @@
-#define POWER 0xFFA25D
-#define VOLUP 0xFF629D
-#define VOLDOWN 0xFFA857
-#define EQ 0xFF9867
-#define FUNC 0xFFE21D
-#define LEFT 0xFF22DD
-#define RIGHT 0xFFC23D
-#define PAUSE 0xFF02FD
-#define DOWN 0xFFE01F
-#define UP 0xFF906F
-#define ZERO 0xFF6897
-#define ONE 0xFF30CF
-#define TWO 0xFF18E7
-#define THREE 0xFF7A85
-#define FOUR 0xFF10EF
-#define FIVE 0xFF38C7
-#define SIX 0xFF5AA5
-#define SEVEN 0xFF42BD
-#define EIGHT 0xFF4AB5
-#define NINE 0xFF52AD
-#define REPT 0xFFB04F
+// The IR codes are used to control the display with a remote control
+#ifndef REMOTETOUCH_H
+#define REMOTETOUCH_H
+
+
+extern uint64_t POWER;
+extern uint64_t VOLUP;
+extern uint64_t VOLDOWN;
+extern uint64_t LEFT;
+extern uint64_t RIGHT;
+extern uint64_t PAUSE;
+extern uint64_t DOWN;
+extern uint64_t UP;
+extern uint64_t ONE;
+
+void setUpButton(uint64_t ircode);
+void setDownButton(uint64_t ircode);
+void setLeftButton(uint64_t ircode);
+void setRightButton(uint64_t ircode);
+void setSelectButton(uint64_t ircode);
+void setPowerButton(uint64_t ircode);
+void setVolumeUpButton(uint64_t ircode);
+void setVolumeDownButton(uint64_t ircode);
+void setOneButton(uint64_t ircode);
+
+
+#endif // REMOTETOUCH_H

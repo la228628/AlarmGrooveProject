@@ -36,7 +36,7 @@ void printDetail(uint8_t type, int value);
 void setup()
 {
 #if (defined ESP32)
-  FPSerial.begin(9600, SERIAL_8N1, /*rx =*/D3, /*tx =*/D2);
+  FPSerial.begin(9600, SERIAL_8N1, /*rx =*/26, /*tx =*/27);
 #else
   FPSerial.begin(9600);
 #endif

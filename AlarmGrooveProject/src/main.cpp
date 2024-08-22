@@ -1,13 +1,17 @@
 #include <stdio.h>
-#include "simple_ftp_client.h"
-#include "SD_card_helper.h"
+#include <Wifi.h>
 
-char *ssidToConnect = "WiFi-2.4-2D90";
-char *passwordToConnect = "wws7db5j9bu4k";
+#include <Preferences.h>
 
-const char *ssid = ssidToConnect;
-// const char* ssid     = "raspi-webgui";
-const char *password = passwordToConnect;
+Preferences preferences;
+
+const int emergencyPin = 14;
+
+
+
+String ssid = "defaultSSID";
+String password = "defaultPassword";
+bool connectionFailed = false;
 
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
@@ -17,53 +21,99 @@ const char *password = passwordToConnect;
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 
-#include "SoftwareSerial.h"
 #include "DFRobotDFPlayerMini.h"
+
+#include "Wire.h"
+#include "RTClib.h"
 
 // Define the pins used for the display
 #define TFT_CS 15
 #define TFT_RST 4
 #define TFT_DC 2
-#include <Fonts/FreeMonoBoldOblique12pt7b.h>
-#include <Fonts/FreeSerif9pt7b.h>
-// end of display pins
 
-// define the codes for the remote
 #include "RemoteTouch.h"
 
-// Define the menu index references
+// Define the IR codes for the remote control
+uint64_t POWER = 0xFFA25D;
+uint64_t VOLUP = 0xFF629D;
+uint64_t VOLDOWN = 0xFFA857;
+uint64_t LEFT = 0xFF22DD;
+uint64_t RIGHT = 0xFFC23D;
+uint64_t PAUSE = 0xFF02FD;
+uint64_t DOWN = 0xFFE01F;
+uint64_t UP = 0xFF906F;
+uint64_t ONE = 0xFF30CF;
+
+void setUpButton(uint64_t ircode)
+{
+  UP = ircode;
+  preferences.putULong("remoteUp", UP);
+}
+
+void setDownButton(uint64_t ircode)
+{
+  DOWN = ircode;
+  preferences.putULong("remoteDown", DOWN);
+}
+
+void setLeftButton(uint64_t ircode)
+{
+  LEFT = ircode;
+  preferences.putULong("remoteLeft", LEFT);
+}
+
+void setRightButton(uint64_t ircode)
+{
+  RIGHT = ircode;
+  preferences.putULong("remoteRight", RIGHT);
+}
+
+void setSelectButton(uint64_t ircode)
+{
+  PAUSE = ircode;
+  preferences.putULong("remotePause", PAUSE);
+}
+
+void setPowerButton(uint64_t ircode)
+{
+  POWER = ircode;
+  preferences.putULong("remotePower", POWER);
+}
+
+void setVolumeUpButton(uint64_t ircode)
+{
+  VOLUP = ircode;
+  preferences.putULong("remoteVolUp", VOLUP);
+}
+
+void setVolumeDownButton(uint64_t ircode)
+{
+  VOLDOWN = ircode;
+  preferences.putULong("remoteVolDown", VOLDOWN);
+}
+
+void setOneButton(uint64_t ircode)
+{
+  ONE = ircode;
+  preferences.putULong("remoteOne", ONE);
+}
+
 #include "MenuIndexReferences.h"
 
-// Create an instance of the display
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-// Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, 23, 18, TFT_RST, -1);
-// The most appropriate pins for sck and mosi are 18 and 23 respectively. Or else, use 18 and 19
-//  end of display instance
 
-// Include the file that contains the display functions
 #include "DisplayFunctions.h"
-// It allows to have the functions in a separate file and make the main file cleaner
+#include "pictocode.h"
 
 // Define the pin for the mp3 player state
 int Player_state = 13;
 
-// Use pins 2 and 3 to communicate with DFPlayer Mini
 static const uint8_t PIN_MP3_TX = 27; // Connects to module's RX
 static const uint8_t PIN_MP3_RX = 26; // Connects to module's TX
-SoftwareSerial softwareSerial(PIN_MP3_RX, PIN_MP3_TX);
-
-// Create the Player object
+#define DFPSerial Serial1
 DFRobotDFPlayerMini player;
 
-// An IR detector/demodulator is connected to GPIO pin 14(D5 on a NodeMCU
-// board).
-// Note: GPIO 16 won't work on the ESP8266 as it does not have interrupts.
-// Note: GPIO 14 won't work on the ESP32-C3 as it causes the board to reboot.
-#ifdef ARDUINO_ESP32C3_DEV
-// const uint16_t kRecvPin = 10;  // 14 on a ESP32-C3 causes a boot loop.
-#else  // ARDUINO_ESP32C3_DEV
 const uint16_t kRecvPin = 16;
-#endif // ARDUINO_ESP32C3_DEV
 
 IRrecv irrecv(kRecvPin);
 
@@ -73,7 +123,71 @@ int mainMenuIndex = 1;
 
 int currentMenu = ALARMCLOCKMAINSCREEN;
 
-char *choosenMusic = "";
+int choosenMusic = 1;
+int musicVolume = 2;
+int folderCount = 0;
+
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+float temperature = 0;
+int pictocode = 0;
+
+String lat = "50.600004741970174";
+String lon = "3.625515300047851";
+String api_key = "wKNTjiRedyF1ZOc0";
+String api_endpoint;
+
+RTC_DS3231 rtc;
+
+int hour = 0;
+int minute = 0;
+int alarmHour = 0;
+int alarmMinute = 0;
+bool alreadyTriggered = false;
+
+void getWeatherInformations()
+{
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    HTTPClient http;
+
+    api_endpoint = "https://my.meteoblue.com/packages/current?lat=" + lat + "&lon=" + lon + "&apikey=" + api_key;
+
+    Serial.println(api_endpoint);
+
+    http.begin(api_endpoint);
+    int httpCode = http.GET();
+
+    if (httpCode > 0)
+    {
+      String payload = http.getString();
+      Serial.println(payload);
+
+      DynamicJsonDocument doc(2048);
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error)
+      {
+        int pcode = doc["data_current"]["pictocode"];
+        float to = doc["data_current"]["temperature"];
+
+        pictocode = pcode;
+        temperature = to;
+      }
+      else
+      {
+        Serial.println("Error parsing JSON");
+      }
+    }
+    else
+    {
+      Serial.println("Error in HTTP request");
+    }
+
+    http.end();
+  }
+}
 
 bool waitForMenuSelection()
 {
@@ -132,81 +246,13 @@ bool waitForMenuSelection()
   }
 }
 
-int waitForMusicDownloadIndex(String nameList[])
-{
-  int index = 0;
-  int indexMax = -1;
-
-  for (int i = 0; i < 255; i++)
-  {
-    if (nameList[i] != "")
-    {
-      indexMax++;
-    }
-  }
-  showMusicToDownload(nameList[index].c_str(), index);
-
-  while (currentMenu == DOWNLOADMUSIC)
-  {
-    if (irrecv.decode(&results))
-    {
-      if (results.value == PAUSE)
-      {
-        irrecv.resume();
-        return index;
-      }
-      else if (results.value == UP)
-      {
-        if (index > 0)
-        {
-          index--;
-        }
-        else
-        {
-          index = indexMax;
-        }
-
-        showMusicToDownload(nameList[index].c_str(), index);
-
-        irrecv.resume();
-      }
-      else if (results.value == DOWN)
-      {
-        if (index < indexMax)
-        {
-          index++;
-        }
-        else
-        {
-          index = 0;
-        }
-
-        showMusicToDownload(nameList[index].c_str(), index);
-
-        irrecv.resume();
-      }
-      else if (results.value == LEFT)
-      {
-        irrecv.resume();
-        return -1;
-      }
-      else
-      {
-        irrecv.resume();
-      }
-    }
-    Serial.println(index);
-    delay(50);
-  }
-}
-
-int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
+int waitForMusicToSet(int numberOfMusicFiles)
 {
 
-  int index = 0;
-  int indexmax = numberOfMusicFiles - 1;
+  int index = 1;
+  int indexmax = numberOfMusicFiles;
 
-  showMusicOnSD(musicList[index].c_str());
+  showMusicOnSD(index);
 
   while (currentMenu == CHOOSEMUSIC)
   {
@@ -216,12 +262,14 @@ int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
 
       if (results.value == PAUSE)
       {
+        player.stop();
         irrecv.resume();
         return index;
       }
       else if (results.value == UP)
       {
-        if (index == 0)
+        player.stop();
+        if (index == 1)
         {
           index = indexmax;
         }
@@ -229,191 +277,43 @@ int waitForMusicToSet(String musicList[], int numberOfMusicFiles)
         {
           index--;
         }
+        showMusicOnSD(index);
       }
       else if (results.value == DOWN)
       {
+        player.stop();
         if (index == indexmax)
         {
-          index = 0;
+          index = 1;
         }
         else
         {
           index++;
         }
+        showMusicOnSD(index);
       }
       else if (results.value == LEFT)
       {
+
+        player.stop();
         return -1;
         irrecv.resume();
       }
-      showMusicOnSD(musicList[index].c_str());
+      else if (results.value == ONE)
+      {
+        Serial.println(player.readState());
+        if (player.readState() == 1)
+        {
+          player.stop();
+        }
+        else
+        {
+          player.play(index);
+        }
+      }
       irrecv.resume();
     }
   }
-}
-
-bool downloadNameMusicFile()
-{
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of connection error");
-    return false;
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of login error");
-    return false;
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  // sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-  if (downloadFileFromFTP("/names/names.txt", 0, "") == false)
-  {
-    Serial.println("File Download Failed");
-    tft.fillScreen(ILI9341_RED);
-    tft.setCursor(10, 10);
-    tft.println("Failed to download namesFiles because of download error");
-    return false;
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-  return true;
-
-  delay(5000);
-}
-
-bool downloadMusicFile(String musicName, int musicIndex)
-{
-
-  String pathMusicFull = "/music/" + musicName;
-
-  // On veut enlever les accents
-  pathMusicFull.replace("é", "e");
-  pathMusicFull.replace("è", "e");
-  pathMusicFull.replace("à", "a");
-  pathMusicFull.replace("ç", "c");
-  pathMusicFull.replace("ù", "u");
-  pathMusicFull.replace("â", "a");
-  pathMusicFull.replace("ê", "e");
-  pathMusicFull.replace("î", "i");
-
-  const char *pathMusicFullToChar = pathMusicFull.c_str();
-
-  const char *pathMusicName = musicName.c_str();
-
-  Serial.println(pathMusicName);
-
-  if (connectToFTPServer())
-  {
-    Serial.println("Connected to FTP Server");
-  }
-  else
-  {
-    Serial.println("Connection Failed");
-    return false;
-  }
-
-  if (!loginFTPServer("esp32user", "pass"))
-  {
-    Serial.println("Login Failed");
-    return false;
-  }
-  else
-  {
-    Serial.println(">Loged iN");
-  }
-
-  sendFTPCommand("NOOP");
-  sendFTPCommand("TYPE I");
-  sendFTPCommand("TYPE I");
-  delay(200);
-  sendFTPCommand("EPSV");
-  parseFTPDataPort();
-
-  if (downloadFileFromFTP(pathMusicFullToChar, musicIndex, pathMusicName) == false)
-  {
-    Serial.println("File Download Failed");
-    return false;
-  }
-  else
-  {
-    Serial.println("File Downloaded");
-  }
-  return true;
-}
-
-void manageMusicDownloadMenu()
-{
- 
-
-  currentMenu = DOWNLOADMUSIC;
-
-  int musicToDownloadIndex = 0;
-
-  int numberOfMusicFiles = 0;
-
-  String nameList[255];
-  if (getLinesFromTxtFile("/names/names.txt", nameList))
-  {
-    for (int i = 0; i < 255; i++)
-    {
-      if (nameList[i] != "")
-        Serial.println(nameList[i]);
-      numberOfMusicFiles++;
-    }
-  }
-  else
-  {
-    Serial.println("Failed to get names from file");
-  }
-
-  tft.setTextSize(2);
-
-  musicToDownloadIndex = waitForMusicDownloadIndex(nameList);
-
-  if (musicToDownloadIndex != -1)
-  {
-    showDownloadMusicWaitingScreen();
-    if (downloadMusicFile(nameList[musicToDownloadIndex], musicToDownloadIndex))
-    {
-      showMusicDownloadSuccessScreen();
-    }
-    else
-    {
-      showFTPErrorsScreen();
-    }
-  }
-  else
-  {
-    currentMenu = MAINMENU;
-    return;
-  }
-  disconnectFromFTPServer();
-  delay(3000);
-  currentMenu = MAINMENU;
 }
 
 void manageMainMenu()
@@ -434,14 +334,17 @@ void manageMainMenu()
         currentMenu = GETIPINFOS;
         break;
 
-      case MAINMENUDOWNLOADMUSICINDEX:
-        currentMenu = DOWNLOADMUSIC;
+      case MAINMENUSETVOLUME:
+        currentMenu = SETVOUME;
         break;
-      case FETCHMUSICFILENAME:
-        currentMenu = FETCHMUSICFILENAME;
+      case MAINSERIALCOMMENUINDEX:
+        currentMenu = SERIALCOM;
         break;
       case MAINMENUSETMUSICINDEX:
         currentMenu = CHOOSEMUSIC;
+        break;
+      case MAINMENUSETALARMTIMEINDEX:
+        currentMenu = SETALARMTIME;
         break;
       }
     }
@@ -453,8 +356,7 @@ void manageMainMenu()
 }
 void manageGetIpInfos()
 {
-  // setFTPHost("0.0.0.0");
-  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), getFTPHost(), WiFi.SSID().c_str());
+  showIpInformations(WiFi.localIP().toString().c_str(), WiFi.subnetMask().toString().c_str(), WiFi.gatewayIP().toString().c_str(), ssid.c_str());
   while (results.value != LEFT)
   {
     if (irrecv.decode(&results))
@@ -464,47 +366,28 @@ void manageGetIpInfos()
   }
   currentMenu = MAINMENU;
 }
-void manageFetchMusicFileName()
-{
-  resetDisplay();
-  showFetchMusicFilesNameScreen();
-
-  if (downloadNameMusicFile())
-  {
-    showFetchMusicFilesNameSucessScreen();
-  }
-  else
-  {
-    showFTPErrorsScreen();
-  }
-  disconnectFromFTPServer();
-  delay(3000);
-  currentMenu = MAINMENU;
-
-}
 
 void manageChooseMusicMenu()
 {
   resetDisplay();
-  String musicOnSD[255];
-  int numberOfMusicFiles = getFilesFromDir("/music", 0, musicOnSD);
+  int numberOfMusicFiles = folderCount;
 
   if (numberOfMusicFiles == -1)
   {
     currentMenu = MAINMENU;
     return;
   }
-  int musicChoice = waitForMusicToSet(musicOnSD, numberOfMusicFiles);
+  int musicChoice = waitForMusicToSet(numberOfMusicFiles);
 
   if (musicChoice != -1)
   {
-    choosenMusic = (char *)musicOnSD[musicChoice].c_str();
+    choosenMusic = musicChoice;
+    preferences.putUInt("choosenMusic", choosenMusic);
     showMusicChoiceValidationScreen(choosenMusic);
     delay(3000);
   }
 
   currentMenu = MAINMENU;
-
   irrecv.resume();
   return;
 }
@@ -536,11 +419,159 @@ void manageRestartConfirmAction()
   }
 }
 
+void manageSetAlarmTime()
+{
+  int h = hour;
+  int m = minute;
+  showSetAlarmTimeScreen(h, m);
+  while (currentMenu == SETALARMTIME)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        alarmHour = h;
+        preferences.putUInt("alarmHour", alarmHour);
+        alarmMinute = m;
+        preferences.putUInt("alarmMinute", alarmMinute);
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == UP)
+      {
+        if (h < 23)
+        {
+          h++;
+        }
+        else
+        {
+          h = 0;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == DOWN)
+      {
+        if (h > 0)
+        {
+          h--;
+        }
+        else
+        {
+          h = 23;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == LEFT)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == VOLUP)
+      {
+        if (m < 59)
+        {
+          m++;
+        }
+        else
+        {
+          m = 0;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else if (results.value == VOLDOWN)
+      {
+        if (m > 0)
+        {
+          m--;
+        }
+        else
+        {
+          m = 59;
+        }
+        showSetAlarmTimeScreen(h, m);
+        irrecv.resume();
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
+}
+void getCurrentTime()
+{
+  DateTime now = rtc.now();
+  int h = now.hour();
+  int m = now.minute();
+  hour = h;
+  minute = m;
+  Serial.print(h);
+  Serial.print(":");
+  Serial.println(m);
+}
 void manageAlarmClockMainScreen()
 {
-  showAlarmClockMainScreen(choosenMusic);
+
+  irrecv.resume();
+
+  getCurrentTime();
+
+  showAlarmClockMainScreen(choosenMusic, musicVolume, temperature, getPictocodeDescription(pictocode), lat, lon, hour, minute, alarmHour, alarmMinute);
   while (currentMenu == ALARMCLOCKMAINSCREEN)
   {
+    int previousHour = hour;
+    int previousMinute = minute;
+    DateTime now = rtc.now();
+
+    if (now.hour() != previousHour)
+    {
+      getWeatherInformations();
+    }
+
+    if (now.minute() != previousMinute || now.hour() != previousHour)
+    {
+      getCurrentTime();
+      modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
+      alreadyTriggered = false;
+
+      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered == false)
+      {
+
+        player.loop(choosenMusic);
+        while (true)
+        {
+          previousHour = hour;
+          previousMinute = minute;
+          DateTime now = rtc.now();
+          if (now.hour() != previousHour || now.minute() != previousMinute)
+          {
+            getCurrentTime();
+            modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
+          }
+          if (irrecv.decode(&results))
+          {
+            if (results.value == PAUSE)
+            {
+              player.stop();
+              alreadyTriggered = true;
+              irrecv.resume();
+              break;
+            }
+            else
+            {
+              irrecv.resume();
+            }
+          }
+        }
+      }
+    }
+
     if (irrecv.decode(&results))
     {
       Serial.println(results.value);
@@ -557,12 +588,292 @@ void manageAlarmClockMainScreen()
     }
   }
 }
+void manageSetVolume()
+{
+  showSetVolumeScreen(musicVolume);
+  int volume = musicVolume;
+  while (currentMenu == SETVOUME)
+  {
+    if (irrecv.decode(&results))
+    {
+      Serial.println(results.value);
+      if (results.value == PAUSE)
+      {
+        musicVolume = volume;
+        preferences.putUInt("musicVolume", musicVolume);
+        player.volume(musicVolume);
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else if (results.value == UP)
+      {
+        if (volume < 30)
+        {
+          volume++;
+          showSetVolumeScreen(volume);
+          irrecv.resume();
+        }
+        else
+        {
+          volume = 30;
+          irrecv.resume();
+        }
+      }
+      else if (results.value == DOWN)
+      {
+        if (volume > 1)
+        {
+          volume--;
+          showSetVolumeScreen(volume);
+          irrecv.resume();
+        }
+        else
+        {
+          volume = 1;
+          irrecv.resume();
+        }
+      }
+      else if (results.value == LEFT)
+      {
+        currentMenu = MAINMENU;
+        irrecv.resume();
+        return;
+      }
+      else
+      {
+        irrecv.resume();
+      }
+    }
+  }
+}
+
+void manageSerialCom()
+{
+
+  String _ssid = ssid;
+  String _password = password;
+  String _lat = lat;
+  String _lon = lon;
+  String _api_key = api_key;
+
+  bool dataSend = false;
+
+  showWaitForDataScreen();
+
+  while (currentMenu == SERIALCOM)
+  {
+    if (dataSend == false)
+    {
+
+      if (Serial.available() > 0)
+      {
+        String receivedData = Serial.readStringUntil('\n'); 
+
+        if (receivedData.startsWith("SSID:") && receivedData.equals("SSID:default") == false)
+        {
+          _ssid = receivedData.substring(5); 
+          
+        }
+        else if (receivedData.startsWith("PASSWORD:") && receivedData.equals("PASSWORD:default") == false)
+        {
+          _password = receivedData.substring(9);
+        }
+        else if (receivedData.startsWith("LATITUDE:") && receivedData.equals("LATITUDE:default") == false)
+        {
+          _lat = receivedData.substring(9); 
+        }
+        else if (receivedData.startsWith("LONGITUDE:") && receivedData.equals("LONGITUDE:default") == false)
+        {
+          _lon = receivedData.substring(10); 
+        }
+        else if (receivedData.startsWith("APIKEY:"))
+        {
+          if (receivedData.equals("APIKEY:default") == false)
+          {
+            _api_key = receivedData.substring(7);
+          }
+          dataSend = true;
+        }
+      }
+    }
+    else
+    {
+      showConfirmInfosScreen(_ssid.c_str(), _password.c_str(), _lat.c_str(), _lon.c_str(), _api_key.c_str());
+      while (dataSend == true)
+      {
+        if (irrecv.decode(&results))
+        {
+          if (results.value == LEFT)
+          {
+            irrecv.resume();
+            return;
+          }
+          else if (results.value == RIGHT)
+          {
+            currentMenu = MAINMENU;
+            preferences.putString("ssid", _ssid);
+
+            preferences.putString("password", _password);
+
+            preferences.putString("lat", _lat);
+
+            preferences.putString("lon", _lon);
+
+            preferences.putString("api_key", _api_key);
+            irrecv.resume();
+            ESP.restart();
+          }
+          else
+          {
+            irrecv.resume();
+          }
+        }
+      }
+    }
+  }
+}
+
+void manageEmergency()
+{
+  struct ButtonAction
+  {
+    const char *prompt;
+    void (*setButtonFunc)(uint64_t);
+  } buttonActions[] = {
+      {"Press PAUSE Button", setSelectButton},
+      {"Press UP Button", setUpButton},
+      {"Press DOWN Button", setDownButton},
+      {"Press LEFT Button", setLeftButton},
+      {"Press RIGHT Button", setRightButton},
+      {"Press POWER Button", setPowerButton},
+      {"Press VOLUP Button", setVolumeUpButton},
+      {"Press VOLDOWN Button", setVolumeDownButton},
+      {"Press ONE Button", setOneButton}};
+
+  for (auto &action : buttonActions)
+  {
+    bool buttonDetected = false;
+    showRemoteWaitingScreen(action.prompt);
+    irrecv.resume();
+    while (!buttonDetected)
+    {
+      if (irrecv.decode(&results))
+      {
+        action.setButtonFunc(results.value);
+        delay(500);
+        irrecv.resume();
+        buttonDetected = true;
+      }
+    }
+  }
+  
+}
 
 void setup()
 {
 
   Serial.begin(115200);
-  Serial2.begin(115200);
+
+  preferences.begin("alarmclock", false);
+
+  if (preferences.isKey("ssid"))
+  {
+    String ssidString = preferences.getString("ssid", "");
+    if (ssidString != "")
+    {
+      ssid = ssidString;
+    }
+  }
+
+  if (preferences.isKey("password"))
+  {
+    String passwordString = preferences.getString("password", "");
+    if (passwordString != "")
+    {
+      password = passwordString;
+    }
+  }
+
+  if (preferences.isKey("musicVolume"))
+  {
+    musicVolume = preferences.getUInt("musicVolume");
+  }
+  if (preferences.isKey("choosenMusic"))
+  {
+    choosenMusic = preferences.getUInt("choosenMusic");
+  }
+  if (preferences.isKey("alarmHour"))
+  {
+    alarmHour = preferences.getUInt("alarmHour");
+  }
+  if (preferences.isKey("alarmMinute"))
+  {
+    alarmMinute = preferences.getUInt("alarmMinute");
+  }
+  if (preferences.isKey("lat"))
+  {
+    lat = preferences.getString("lat");
+  }
+  if (preferences.isKey("lon"))
+  {
+    lon = preferences.getString("lon");
+  }
+  if (preferences.isKey("api_key"))
+  {
+    api_key = preferences.getString("api_key");
+  }
+  if (preferences.isKey("remoteUp"))
+  {
+    setUpButton(preferences.getULong("remoteUp"));
+  }
+  if (preferences.isKey("remoteDown"))
+  {
+    setDownButton(preferences.getULong("remoteDown"));
+  }
+  if (preferences.isKey("remoteLeft"))
+  {
+    setLeftButton(preferences.getULong("remoteLeft"));
+  }
+  if (preferences.isKey("remoteRight"))
+  {
+    setRightButton(preferences.getULong("remoteRight"));
+  }
+  if (preferences.isKey("remotePause"))
+  {
+    setSelectButton(preferences.getULong("remotePause"));
+  }
+  if (preferences.isKey("remotePower"))
+  {
+    setPowerButton(preferences.getULong("remotePower"));
+  }
+  if (preferences.isKey("remoteVolUp"))
+  {
+    setVolumeUpButton(preferences.getULong("remoteVolUp"));
+  }
+  if (preferences.isKey("remoteVolDown"))
+  {
+    setVolumeDownButton(preferences.getULong("remoteVolDown"));
+  }
+  if (preferences.isKey("remoteOne"))
+  {
+    setOneButton(preferences.getULong("remoteOne"));
+  }
+
+  Wire.begin();
+  if (!rtc.begin())
+  {
+    Serial.println("Couldn't find RTC");
+    while (1)
+      ;
+  }
+
+  if (rtc.lostPower())
+  {
+    Serial.println("RTC lost power, let's set the time!");
+    // Comment or adjust this line depending on how you want to set the time
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
 
   irrecv.enableIRIn(); // Start the receiver
   while (!Serial)      // Wait for the serial connection to be establised.
@@ -573,31 +884,62 @@ void setup()
 
   tft.begin();
   tft.setFont();
+  tft.setRotation(3);
+
+  pinMode(emergencyPin, INPUT_PULLUP);
+  int time = 0;
+  bool emergency = false;
+  showEmergencyWaitScreen();
+
+  // Check if the emergency button is pressed in the first 5 seconds
+  while (time < 5000)
+  {
+    if (digitalRead(emergencyPin) == LOW)
+    {
+      emergency = true;
+      break;
+    }
+    time += 100;
+    delay(100);
+  }
+
+  if (emergency)
+  {
+    manageEmergency();
+  }
+  irrecv.resume();
+
   showWelcomeScreen();
   delay(1000);
-
   tft.fillScreen(ILI9341_BLACK);
-
-  if (!SD_Initialize())
-  {
-    Serial.println("Card Mount Failed");
-    showCartMountFailed();
-    delay(1000);
-    currentMenu = FATALERROR;
-    return;
-  }
-  else
-  {
-    showCartMountSuccess();
-  }
-
-  delay(1000);
+  Serial.println("SSID:");
+  Serial.println(ssid);
+  Serial.println("PASSWORD:");
+  Serial.println(password);
 
   WiFi.begin(ssid, password);
 
   showWifiConnectionWaitScreen();
-  while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED && connectionFailed == false)
   {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.print(WiFi.status());
+
+    if(irrecv.decode(&results))
+    {
+      if(results.value == PAUSE)
+      {
+        connectionFailed = true;
+      }
+      irrecv.resume();
+    }
+    
+    if (WiFi.status() == WL_NO_SSID_AVAIL || WiFi.status() == WL_CONNECT_FAILED )
+    {
+      Serial.println("Connection failed");
+      Serial.println(WiFi.status());  
+      connectionFailed = true;
+    }
   }
 
   Serial.println("");
@@ -605,23 +947,47 @@ void setup()
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+  if (connectionFailed == false)
+  {
 
+    showWifiConnectionSuccessScreen(WiFi.localIP().toString().c_str());
+    getWeatherInformations();
+  }
+  else
+  {
+    showWifiConnectionFailedScreen();
+  }
   delay(1000);
 
-  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+  DFPSerial.begin(9600, SERIAL_8N1, /*rx =*/26, /*tx =*/27);
+
+  Serial.println();
+  Serial.println(F("DFPlayer Mini Demo"));
+
+  if (!player.begin(DFPSerial, /*isACK = */ true, /*doReset = */ true))
+  {
+    Serial.println(F("Unable to begin:"));
+    Serial.println(F("1.Please recheck the connection!"));
+    Serial.println(F("2.Please insert the SD card!"));
+    showFatalErrorScreen();
+    while (true)
+      ;
+  }
+
+  player.stop();
+  int count = player.readFileCounts();
+  int fCount = player.readFolderCounts();
+  folderCount = fCount;
+
+  player.volume(musicVolume);
 }
 
 void loop()
 {
 
-  // put your main code here, to run repeatedly:
-
   if (currentMenu == FATALERROR)
   {
     showFatalErrorScreen();
-    // We need to stop the loop here
     while (true)
     {
     }
@@ -629,14 +995,8 @@ void loop()
 
   switch (currentMenu)
   {
-  case DOWNLOADMUSIC:
-    manageMusicDownloadMenu();
-    break;
   case MAINMENU:
     manageMainMenu();
-    break;
-  case FETCHMUSICFILENAME:
-    manageFetchMusicFileName();
     break;
   case CHOOSEMUSIC:
     manageChooseMusicMenu();
@@ -649,6 +1009,18 @@ void loop()
     break;
   case GETIPINFOS:
     manageGetIpInfos();
+    break;
+
+  case SETVOUME:
+    manageSetVolume();
+    break;
+
+  case SETALARMTIME:
+    manageSetAlarmTime();
+    break;
+
+  case SERIALCOM:
+    manageSerialCom();
     break;
   }
 }

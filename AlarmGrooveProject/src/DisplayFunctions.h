@@ -1,7 +1,7 @@
 // DisplayFunctions.h
 
-#ifndef DISPLAYFUNCTIONS_H
-#define DISPLAYFUNCTIONS_H
+#ifndef DISPLAYFUNCTIONS_H 
+#define DISPLAYFUNCTIONS_H 
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
@@ -12,28 +12,35 @@ extern Adafruit_ILI9341 tft;
 void unSelectAll();
 void selectMenuIndex();
 void updateMainMenu();
-void showIpInformations( const char* ip, const char* mask, const char* gateway,  char *ftpHost, const char* ssid);
+void showIpInformations( const char* ip, const char* mask, const char* gateway, const char* ssid);
 void showWelcomeScreen();
-void showCartMountFailed();
-void showCartMountSuccess();
+
 void showFatalErrorScreen();
 void showWifiConnectionWaitScreen();
 void showWifiConnectionSuccessScreen(const char* ip);
-void showFetchMusicFilesNameScreen();
-void showFetchMusicFilesNameSucessScreen();
-void showFTPErrorsScreen();
+void showSetVolumeScreen(int vol);
 
-void showMusicDownloadSuccessScreen();
-void showDownloadMusicWaitingScreen();
+
 
 void showRestartConfirmActionScreen();
 
-void showMusicToDownload(const char* musicName, int musicIndex);
-void showMusicOnSD(const char *musicName);
-void showMusicChoiceValidationScreen(const char *musicName);
 
-void showAlarmClockMainScreen(char *choosenMusic);
+void showMusicOnSD(int musicName);
+void showMusicChoiceValidationScreen(int music);
 
+void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, String lat, String lon, int hour, int minute, int alarmH, int alarmM);
+void modifyAlarmClockScreen(int hour, int minute, float temperature, const char *weather);
+
+void showSetAlarmTimeScreen(int hour, int minute);
+
+void showWaitForDataScreen();
+void showConfirmInfosScreen(const char* ssid, const char* password, const char* latitude, const char* longitude, const char* apiKey);
 void resetDisplay();
+
+void showEmergencyWaitScreen();
+
+void showRemoteWaitingScreen( const char *text);
+
+void showWifiConnectionFailedScreen();
 
 #endif // DISPLAYFUNCTIONS_H

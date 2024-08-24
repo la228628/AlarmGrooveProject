@@ -43,4 +43,6 @@ void showRemoteWaitingScreen( const char *text);
 
 void showWifiConnectionFailedScreen();
 
+void showNoMusicOnSD();
+
 #endif // DISPLAYFUNCTIONS_H

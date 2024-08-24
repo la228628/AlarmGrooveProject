@@ -372,8 +372,10 @@ void manageChooseMusicMenu()
   resetDisplay();
   int numberOfMusicFiles = folderCount;
 
-  if (numberOfMusicFiles == -1)
+  if (numberOfMusicFiles == 0)
   {
+    showNoMusicOnSD();
+    delay(3000);
     currentMenu = MAINMENU;
     return;
   }
@@ -540,7 +542,7 @@ void manageAlarmClockMainScreen()
       modifyAlarmClockScreen(hour, minute, temperature, getPictocodeDescription(pictocode));
       alreadyTriggered = false;
 
-      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered == false)
+      if (hour == alarmHour && minute == alarmMinute && alreadyTriggered == false && choosenMusic != 0)
       {
 
         player.loop(choosenMusic);
@@ -978,6 +980,19 @@ void setup()
   int count = player.readFileCounts();
   int fCount = player.readFolderCounts();
   folderCount = fCount;
+
+  Serial.print("File counts: ");
+  Serial.println(folderCount);
+
+  if(choosenMusic > folderCount)
+  {
+    choosenMusic = 1;
+  }
+
+  if(folderCount==0)
+  {
+    choosenMusic = 0;
+  }
 
   player.volume(musicVolume);
 }

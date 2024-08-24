@@ -342,7 +342,14 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     tft.print("GROOVE");
     tft.setTextSize(1);
     tft.setCursor(63, 199);
+    if (choosenMusic == 0)
+    {
+        tft.print("NOT FOUND");
+    }
+    else
+    {
     tft.print(choosenMusic);
+    }
     tft.drawBitmap(220, 160, image_clock_alarm_bits, 15, 16, 0xFFFF);
     tft.setTextSize(2);
     tft.setCursor(244, 161);
@@ -638,6 +645,18 @@ void showWifiConnectionFailedScreen()
     tft.println("Failed to connect to WiFi");
     tft.setCursor(10, 50);
     tft.println("Please check the credentials");
+    tft.setCursor(10, 90);
+    tft.println("and restart the device.");
+}
+
+void showNoMusicOnSD(){
+    tft.fillScreen(ILI9341_RED);
+    tft.setTextSize(2);
+    tft.setTextColor(ILI9341_WHITE);
+    tft.setCursor(10, 10);
+    tft.println("No music found on the SD card");
+    tft.setCursor(10, 50);
+    tft.println("Please add some music to the SD card");
     tft.setCursor(10, 90);
     tft.println("and restart the device.");
 }

@@ -277,7 +277,7 @@ int waitForMusicToSet(int numberOfMusicFiles)
         {
           index--;
         }
-        showMusicOnSD(index);
+        modifyShowMusicOnSD(index);
       }
       else if (results.value == DOWN)
       {
@@ -290,7 +290,7 @@ int waitForMusicToSet(int numberOfMusicFiles)
         {
           index++;
         }
-        showMusicOnSD(index);
+        modifyShowMusicOnSD(index);
       }
       else if (results.value == LEFT)
       {
@@ -451,7 +451,7 @@ void manageSetAlarmTime()
         {
           h = 0;
         }
-        showSetAlarmTimeScreen(h, m);
+        modifySetAlarmTimeScreen(h, m);
         irrecv.resume();
       }
       else if (results.value == DOWN)
@@ -464,7 +464,7 @@ void manageSetAlarmTime()
         {
           h = 23;
         }
-        showSetAlarmTimeScreen(h, m);
+        modifySetAlarmTimeScreen(h, m);
         irrecv.resume();
       }
       else if (results.value == LEFT)
@@ -483,7 +483,7 @@ void manageSetAlarmTime()
         {
           m = 0;
         }
-        showSetAlarmTimeScreen(h, m);
+        modifySetAlarmTimeScreen(h, m);
         irrecv.resume();
       }
       else if (results.value == VOLDOWN)
@@ -496,7 +496,7 @@ void manageSetAlarmTime()
         {
           m = 59;
         }
-        showSetAlarmTimeScreen(h, m);
+        modifySetAlarmTimeScreen(h, m);
         irrecv.resume();
       }
       else
@@ -608,12 +608,12 @@ void manageSetVolume()
         irrecv.resume();
         return;
       }
-      else if (results.value == UP)
+      else if (results.value == VOLUP)
       {
         if (volume < 30)
         {
           volume++;
-          showSetVolumeScreen(volume);
+          modifySetVolumeScreen(volume);
           irrecv.resume();
         }
         else
@@ -622,12 +622,12 @@ void manageSetVolume()
           irrecv.resume();
         }
       }
-      else if (results.value == DOWN)
+      else if (results.value == VOLDOWN)
       {
         if (volume > 1)
         {
           volume--;
-          showSetVolumeScreen(volume);
+          modifySetVolumeScreen(volume);
           irrecv.resume();
         }
         else
@@ -861,6 +861,9 @@ void setup()
   {
     setOneButton(preferences.getULong("remoteOne"));
   }
+
+  
+
 
   Wire.begin();
   if (!rtc.begin())

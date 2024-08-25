@@ -9,7 +9,7 @@
 // Extern declaration to use the display object
 extern Adafruit_ILI9341 tft;
 
-void unSelectAll();
+void unSelectAll(); 
 void selectMenuIndex();
 void updateMainMenu();
 void showIpInformations( const char* ip, const char* mask, const char* gateway, const char* ssid);
@@ -19,6 +19,7 @@ void showFatalErrorScreen();
 void showWifiConnectionWaitScreen();
 void showWifiConnectionSuccessScreen(const char* ip);
 void showSetVolumeScreen(int vol);
+void modifySetVolumeScreen(int vol);
 
 
 
@@ -26,12 +27,14 @@ void showRestartConfirmActionScreen();
 
 
 void showMusicOnSD(int musicName);
+void modifyShowMusicOnSD(int musicIndex);
 void showMusicChoiceValidationScreen(int music);
 
 void showAlarmClockMainScreen(int choosenMusic, int musicVolume,float temperature, const char *weather, String lat, String lon, int hour, int minute, int alarmH, int alarmM);
 void modifyAlarmClockScreen(int hour, int minute, float temperature, const char *weather);
 
 void showSetAlarmTimeScreen(int hour, int minute);
+void modifySetAlarmTimeScreen(int hour, int minute);
 
 void showWaitForDataScreen();
 void showConfirmInfosScreen(const char* ssid, const char* password, const char* latitude, const char* longitude, const char* apiKey);

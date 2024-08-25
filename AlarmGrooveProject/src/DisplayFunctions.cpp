@@ -208,32 +208,40 @@ void showMusicOnSD(int musicIndex)
 {
     resetDisplay();
 
-    tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
-    tft.fillRect(5, 5, 310, 50, ILI9341_DARKGREY);
-
-    tft.setTextColor(ILI9341_WHITE);
+    tft.drawRect(5, 5, 310, 50, 0x0);
+    tft.fillRect(5, 5, 310, 50, 0xC618);
+    tft.drawLine(5, 60, 315, 60, 0x0);
+    tft.setTextColor(0xFFE0);
+    tft.setTextSize(3);
+    tft.setCursor(3, 123);
+    tft.print("Tack number:");
+    tft.setTextColor(0xFFFF);
     tft.setTextSize(2);
-    tft.setCursor(10, 20);
-    tft.println("Select the music you want to set for alarm");
-
-    tft.drawLine(5, 60, 315, 60, ILI9341_WHITE);
-
-    tft.setTextSize(1);
-    tft.setCursor(10, 70);
-    tft.println("Press PAUSE to confirm");
-
-    tft.setCursor(10, 90);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Tack number : ");
+    tft.setCursor(31, 24);
+    tft.print("SELECT THE ALARM MUSIC");
+    tft.setTextColor(0xFFE0);
+    tft.setTextSize(3);
+    tft.setCursor(221, 124);
     tft.print(musicIndex);
+    tft.setTextColor(0xFFFF);
+    tft.setTextSize(2);
+    tft.setCursor(11, 76);
+    tft.print("1/PLAY:PLAY OR STOP MUSIC");
+    tft.setTextColor(0x540);
+    tft.setCursor(161, 209);
+    tft.print("PAUSE:CONFIRM");
+    tft.setTextColor(0xFC00);
+    tft.setCursor(3, 209);
+    tft.print("|<< BACK");
+}
 
-    tft.setCursor(10, 110);
-    tft.setTextColor(ILI9341_ORANGE);
-    tft.println("Press 1 to play the music/ stop the music");
-
-    tft.setCursor(10, 130);
-    tft.setTextColor(ILI9341_ORANGE);
-    tft.println("Press |<< to go back to the main menu");
+void modifyShowMusicOnSD(int musicIndex)
+{
+    tft.fillRect(215,117,101,37,ILI9341_BLACK);
+    tft.setTextColor(0xFFE0);
+    tft.setTextSize(3);
+    tft.setCursor(221, 124);
+    tft.print(musicIndex);
 }
 
 void showFatalErrorScreen()
@@ -280,12 +288,14 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     static const unsigned char PROGMEM image_volume_loud_bits[] = {0x01, 0xc1, 0x00, 0x02, 0x40, 0x80, 0x04, 0x44, 0x40, 0x08, 0x42, 0x20, 0xf0, 0x51, 0x20, 0x80, 0x49, 0x10, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x44, 0x90, 0x80, 0x49, 0x10, 0xf0, 0x51, 0x20, 0x08, 0x42, 0x20, 0x04, 0x44, 0x40, 0x02, 0x40, 0x80, 0x01, 0xc1, 0x00, 0x00, 0x00, 0x00};
     static const unsigned char PROGMEM image_location_map_bits[] = {0x03, 0x80, 0x04, 0x40, 0x09, 0x20, 0x12, 0x90, 0x12, 0x90, 0x11, 0x10, 0x08, 0x20, 0x04, 0x40, 0x04, 0x40, 0x1a, 0xb0, 0x21, 0x08, 0x21, 0x08, 0x40, 0x04, 0x40, 0x04, 0x9c, 0x72, 0xe3, 0x8e};
     static const unsigned char PROGMEM image_clock_alarm_bits[] = {0x79, 0x3c, 0xb3, 0x9a, 0xed, 0x6e, 0xd0, 0x16, 0xa0, 0x0a, 0x41, 0x04, 0x41, 0x04, 0x81, 0x02, 0xc1, 0x06, 0x82, 0x02, 0x44, 0x04, 0x48, 0x04, 0x20, 0x08, 0x10, 0x10, 0x2d, 0x68, 0x43, 0x84};
-    tft.drawCircle(156, 127, 67, 0xFFFF);
-    tft.setTextColor(0xFFFF);
+
     tft.setTextSize(3);
+    tft.setTextColor(ILI9341_YELLOW);
     tft.setCursor(149, 111);
     tft.print(":");
-    tft.setCursor(106, 111);
+    tft.setCursor(83, 100);
+    tft.setTextSize(5);
+
     if (hour < 10)
     {
         tft.print("0");
@@ -296,7 +306,8 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
 
         tft.print(hour);
     }
-    tft.setCursor(174, 111);
+    tft.setCursor(166, 100);
+    tft.setTextSize(5);
     if (minute < 10)
     {
         tft.print("0");
@@ -306,6 +317,7 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     {
         tft.print(minute);
     }
+    tft.setTextColor(0xFFFF);
     tft.drawBitmap(5, 196, image_music_play_button_bits, 15, 15, 0xFFFF);
     tft.setTextSize(1);
     tft.setCursor(28, 199);
@@ -348,7 +360,7 @@ void showAlarmClockMainScreen(int choosenMusic, int musicVolume, float temperatu
     }
     else
     {
-    tft.print(choosenMusic);
+        tft.print(choosenMusic);
     }
     tft.drawBitmap(220, 160, image_clock_alarm_bits, 15, 16, 0xFFFF);
     tft.setTextSize(2);
@@ -443,22 +455,83 @@ void showSetVolumeScreen(int vol)
     tft.setCursor(3, 142);
     tft.print("VOLUME");
     tft.setCursor(95, 141);
+    tft.setTextColor(ILI9341_YELLOW);
     tft.print(vol);
     tft.setTextColor(0xFC00);
     tft.setTextSize(1);
     tft.setCursor(20, 221);
     tft.print("PRESS |<< TO CANCEL");
-    tft.setTextColor(0xFFE0);
+    tft.setTextColor(0x540);
     tft.setCursor(17, 202);
     tft.print("PRESS PAUSE TO CONFIRM");
 }
-void modifyAlarmClockScreen(int hour, int minute , float temperature, const char *weather)
+
+void modifySetVolumeScreen(int vol)
+{
+    tft.fillRect(180, 8, 131, 228, ILI9341_BLACK);
+    tft.drawRect(180, 194, 108, 36, 0xFFFF);
+    tft.drawRect(180, 158, 108, 36, 0xFFFF);
+    tft.drawRect(180, 14, 108, 36, 0xFFFF);
+    tft.drawRect(180, 122, 108, 36, 0xFFFF);
+    tft.drawRect(180, 86, 108, 36, 0xFFFF);
+    tft.drawRect(180, 50, 108, 36, 0xFFFF);
+    if (vol == 30)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 50, 108, 36, ILI9341_RED);
+        tft.fillRect(180, 14, 108, 36, ILI9341_RED);
+    }
+    else if (vol >= 25)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 50, 108, 36, ILI9341_RED);
+    }
+    else if (vol >= 20)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+        tft.fillRect(180, 86, 108, 36, ILI9341_ORANGE);
+    }
+
+    else if (vol >= 15)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 122, 108, 36, ILI9341_ORANGE);
+    }
+    else if (vol >= 10)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+        tft.fillRect(180, 158, 108, 36, ILI9341_GREEN);
+    }
+
+    else if (vol >= 5)
+    {
+        tft.fillRect(180, 194, 108, 36, ILI9341_GREEN);
+    }
+
+    tft.fillRect(86, 135, 58, 32, ILI9341_BLACK);
+    tft.setTextSize(2);
+    tft.setCursor(95, 141);
+    tft.setTextColor(ILI9341_YELLOW);
+    tft.print(vol);
+}
+
+void modifyAlarmClockScreen(int hour, int minute, float temperature, const char *weather)
 {
 
-    tft.setTextSize(3);
+    tft.setTextSize(5);
 
-    tft.setCursor(106, 111);
-    tft.fillRect(106, 111, 40, 24, ILI9341_BLACK);
+    tft.setCursor(83, 100);
+    tft.fillRect(85, 100, 141, 52, ILI9341_BLACK);
+    tft.setTextColor(ILI9341_YELLOW);
     if (hour < 10)
     {
         tft.print("0");
@@ -469,9 +542,8 @@ void modifyAlarmClockScreen(int hour, int minute , float temperature, const char
 
         tft.print(hour);
     }
-    
-    tft.setCursor(174, 111);
-    tft.fillRect(174, 111, 40, 24, ILI9341_BLACK);
+
+    tft.setCursor(166, 100);
     if (minute < 10)
     {
         tft.print("0");
@@ -481,6 +553,10 @@ void modifyAlarmClockScreen(int hour, int minute , float temperature, const char
     {
         tft.print(minute);
     }
+    tft.setTextSize(3);
+    tft.setCursor(149, 111);
+    tft.print(":");
+    tft.setTextColor(ILI9341_WHITE);
     tft.fillRect(224, 6, 65, 24, ILI9341_BLACK);
     tft.setTextSize(2);
     tft.setCursor(228, 10);
@@ -495,42 +571,19 @@ void modifyAlarmClockScreen(int hour, int minute , float temperature, const char
 void showSetAlarmTimeScreen(int hour, int minute)
 {
     resetDisplay();
-    tft.drawRect(5, 5, 310, 50, ILI9341_WHITE);
-    tft.fillRect(5, 5, 310, 50, ILI9341_DARKGREY);
 
-    tft.setTextColor(ILI9341_WHITE);
+    tft.setTextColor(0xFFFF);
     tft.setTextSize(2);
-    tft.setCursor(10, 20);
-    tft.println("Set the alarm time");
-
-    tft.drawLine(5, 60, 315, 60, ILI9341_WHITE);
-
-    tft.setTextSize(1);
-    tft.setCursor(10, 70);
-    tft.println("Press PAUSE to confirm");
-
-    tft.setCursor(10, 90);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Press UP to increase the hour");
-    tft.setCursor(10, 110);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Press DOWN to decrease the hour");
-    tft.setCursor(10, 130);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Press |<< to go back to the main menu");
-
-    tft.setCursor(10, 150);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Press VOL+ to increase the minute");
-    tft.setCursor(10, 170);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Press VOL- to decrease the minute");
-
-    tft.setCursor(10, 190);
-    tft.setTextColor(ILI9341_YELLOW);
-    tft.println("Current time : ");
-    tft.setCursor(10, 210);
-    tft.setTextColor(ILI9341_YELLOW);
+    tft.setCursor(29, 18);
+    tft.print("UP/DOWN TO CHANGE HOUR");
+    tft.setCursor(26, 63);
+    tft.print("VOL+/- TO CHANGE MINUTE");
+    tft.setTextColor(0xFFE0);
+    tft.setTextSize(7);
+    tft.setCursor(139, 105);
+    tft.print(":");
+    tft.setTextSize(5);
+    tft.setCursor(79, 113);
     if (hour < 10)
     {
         tft.print("0");
@@ -540,7 +593,48 @@ void showSetAlarmTimeScreen(int hour, int minute)
     {
         tft.print(hour);
     }
-    tft.print(" : ");
+    tft.setCursor(180, 113);
+    if (minute < 10)
+    {
+        tft.print("0");
+        tft.print(minute);
+    }
+    else
+    {
+        tft.print(minute);
+    }
+    tft.setTextColor(0x540);
+    tft.setTextSize(2);
+    tft.setCursor(210, 208);
+    tft.print("PAUSE:OK");
+    tft.setTextColor(0xFC00);
+    tft.setCursor(18, 208);
+    tft.print("|<< BACK");
+}
+
+void modifySetAlarmTimeScreen(int hour, int minute)
+{
+
+    tft.fillRect(68, 105, 180, 51, ILI9341_BLACK);
+
+    tft.setTextColor(0xFFE0);
+
+    tft.setTextSize(7);
+    tft.setCursor(139, 105);
+    tft.print(":");
+
+    tft.setTextSize(5);
+    tft.setCursor(79, 113);
+    if (hour < 10)
+    {
+        tft.print("0");
+        tft.print(hour);
+    }
+    else
+    {
+        tft.print(hour);
+    }
+    tft.setCursor(180, 113);
     if (minute < 10)
     {
         tft.print("0");
@@ -616,12 +710,12 @@ void showEmergencyWaitScreen()
     tft.setCursor(10, 50);
     tft.println("PRESS THE BUTTON ON THE DEVICE");
     tft.setCursor(10, 90);
-    tft.println("TO SET THE BUTTON");
+    tft.println("TO SET THE REMOTE");
     tft.setCursor(10, 130);
     tft.println("ELSE PLEASE WAIT");
 }
 
-void showRemoteWaitingScreen( const char *text)
+void showRemoteWaitingScreen(const char *text)
 {
     tft.fillScreen(ILI9341_BLACK);
     tft.setTextSize(2);
@@ -649,7 +743,8 @@ void showWifiConnectionFailedScreen()
     tft.println("and restart the device.");
 }
 
-void showNoMusicOnSD(){
+void showNoMusicOnSD()
+{
     tft.fillScreen(ILI9341_RED);
     tft.setTextSize(2);
     tft.setTextColor(ILI9341_WHITE);

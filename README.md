@@ -1,4 +1,6 @@
 # AlarmGrooveProject
+Ceci est le repository du code source d'un projet de systèmes embarqués et IOT appelé le Alarm Groove
+
 Ce réveil utilise une API pour afficher les informations météo et utilise une carte SD pour jouer de la musique. Il est entièrement configurable via une télécommande infrarouge (IR), que interchangeable à tout moment. Les informations de connexion et les coordonnées géographiques sont transférées via l'application Alarm Groove App qui est codée en Java
 Fonctionnalités
 1. Affichage des informations météo
